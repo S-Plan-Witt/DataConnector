@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="S-Plan-DataConnector:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/S_Plan_DataConnector_jar</output-path>
+    <root id="archive" name="S-Plan-DataConnector.jar">
+      <element id="module-output" name="S-Plan-DataConnector" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3.3.1/okhttp-3.3.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/squareup/okio/okio/1.8.0/okio-1.8.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.6/gson-2.8.6.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
