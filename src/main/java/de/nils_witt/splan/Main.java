@@ -21,6 +21,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.FileHandler;
@@ -374,14 +375,100 @@ public class Main {
 
             Gson gson = new Gson();
 
-            //System.out.println(gson.toJson(aufsichten));
-            System.out.println(gson.toJson(lessons));
-            //Vertretungen Array als Json String an die Uploader Methode übergeben
-            uploadToApi(gson.toJson(lessons), "/vertretungen", config, logger);
+            //Vertretungen Array als Json String an die Vergleichs Methode übergeben
+            compareLocalWithApi(lessons, logger, config);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Vergleichen der Lokalen update Datei mit den auf dem Server vorhandenen Vertretungen
+     * @param lessons
+     * @param logger
+     * @param config
+     */
+    private static void compareLocalWithApi(List<VertretungsLesson> lessons, @NotNull Logger logger, @NotNull Config config){
+        OkHttpClient client = new OkHttpClient();
+        Gson gson = new Gson();
+        ArrayList<String> dates = new ArrayList<>();
+        ArrayList<VertretungsLesson> lessonsServer = new ArrayList<>();
+        ArrayList<String> lessonsServerId = new ArrayList<>();
+        ArrayList<String> lessonsLocal = new ArrayList<>();
+        //Get from all lesson the dates and add them to unique list
+        for (VertretungsLesson lesson : lessons) {
+            if(!dates.contains(lesson.getDate())){
+                dates.add(lesson.getDate());
+            }
+            LocalDate date = LocalDate.parse(lesson.getDate());
+
+
+            String id = lesson.getGrade().concat("-").concat(lesson.getSubject()).concat("-").concat(lesson.getGroup()).concat("-").concat(lesson.getLesson()).concat("-").concat(String.valueOf(date.getDayOfWeek().getValue())).concat("-").concat(lesson.getDate());
+            lessonsLocal.add(id);
+        }
+
+        //Load vertretungen for each day
+        for (String date : dates){
+
+            Request request = new Request.Builder()
+                    .url("https://api.nils-witt.codes/vertretungen/date/".concat(date))
+                    .addHeader("Authorization", "Bearer ".concat(config.getBearer()))
+                    .build();
+
+            try {
+                Response response = client.newCall(request).execute();
+                String json = response.body().string();
+                VertretungsLesson[] vertretungsLesson = gson.fromJson(json, VertretungsLesson[].class);
+                for (VertretungsLesson lesson : vertretungsLesson) {
+                    lessonsServerId.add(lesson.getVertretungsID());
+                    lessonsServer.add(lesson);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        //System.out.println(gson.toJson(lessonsServer));
+        //System.out.println(gson.toJson(lessonsLocal));
+
+        System.out.println(lessons.size());
+        System.out.println(lessonsLocal.size());
+        ArrayList<String> removedLessons = new ArrayList<>();
+        ArrayList<String> updatedLessons = new ArrayList<>();
+        for (VertretungsLesson vertretungsLesson : lessonsServer) {
+            if(!lessonsLocal.contains(vertretungsLesson.getVertretungsID())) {
+                //System.out.println("removed: ".concat(vertretungsLesson.getVertretungsID()));
+                removedLessons.add(vertretungsLesson.getVertretungsID());
+            }else {
+                int pos = lessonsLocal.indexOf(vertretungsLesson.getVertretungsID());
+                VertretungsLesson localLesson = lessons.get(pos);
+                if(!(vertretungsLesson.getChangedRoom().equals(localLesson.getChangedRoom()) && vertretungsLesson.getChangedTeacher().equals(localLesson.getChangedTeacher()) && vertretungsLesson.getChangedSubject().equals(localLesson.getChangedSubject() ))){
+                    //System.out.println("updated: ".concat(vertretungsLesson.getVertretungsID()));
+                    updatedLessons.add(vertretungsLesson.getVertretungsID());
+                }
+
+
+
+            }
+        }
+        ArrayList<String> addedLessons = new ArrayList<>();
+        for (String lesson : lessonsLocal) {
+            if(!lessonsServerId.contains(lesson)){
+                //System.out.println("added: ".concat(lesson).concat(",").concat(String.valueOf(lessonsLocal.indexOf(lesson))));
+                addedLessons.add(lesson);
+            }
+
+        }
+
+        System.out.println("removed:".concat(gson.toJson(removedLessons)));
+        System.out.println("added:".concat(gson.toJson(addedLessons)));
+        System.out.println("updated:".concat(gson.toJson(updatedLessons)));
+        uploadToApi(gson.toJson(lessons),"/vertretungen", config, logger);
+
+        for (String lesson : removedLessons) {
+            deleteFromApi("/vertretungen/id/".concat(lesson),config, logger);
+        }
+
     }
 
     /**
@@ -393,7 +480,6 @@ public class Main {
      * @param logger
      */
     private static void uploadToApi(String payload, String urlPath, @NotNull Config config, @NotNull Logger logger) {
-        OkHttpClient client = new OkHttpClient();
 
         //Setzen des Datentypes der Übertragen wird.
         MediaType mediaType = MediaType.parse("application/json");
@@ -407,6 +493,35 @@ public class Main {
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer ".concat(config.getBearer()))
                 .build();
+        ApiRequest(config, logger, request);
+    }
+
+    /**
+     * Die Payload wird an die in der Config angegebene Url, mit dem übergebene Pfad, übertragen
+     *
+     * @param urlPath
+     * @param config
+     * @param logger
+     */
+    private static void deleteFromApi(String urlPath, @NotNull Config config, @NotNull Logger logger) {
+
+        //Http Request erstellen inkl. Daten und des authorization Tokens
+        Request request = new Request.Builder()
+                .url("https://api.nils-witt.codes" + urlPath)
+                .delete()
+                .addHeader("Authorization", "Bearer ".concat(config.getBearer()))
+                .build();
+        ApiRequest(config, logger, request);
+    }
+
+    /**
+     * Api Anfragen ausführen
+     * @param config
+     * @param logger
+     * @param request
+     */
+    private static void ApiRequest(@NotNull Config config, @NotNull Logger logger, Request request) {
+        OkHttpClient client = new OkHttpClient();
         try {
             //Anfrage an Api senden
             Response response = client.newCall(request).execute();
@@ -418,7 +533,7 @@ public class Main {
             }
             logger.info(response.toString());
             response.close();
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             logger.log(Level.WARNING, "Error", e);
         }
     }
