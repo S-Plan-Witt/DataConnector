@@ -14,6 +14,7 @@ public class VertretungsLesson {
     private String info;
     private String grade;
     private String group;
+    private String vertretungsID;
 
     public VertretungsLesson() {
 
@@ -90,5 +91,9 @@ public class VertretungsLesson {
 
     public void setGroup(String group) {
         this.group = group;
+    }
+
+    public String getVertretungsID() {
+        return vertretungsID;
     }
 }
