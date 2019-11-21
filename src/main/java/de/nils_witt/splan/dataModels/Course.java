@@ -37,7 +37,6 @@ public class Course {
     public void updateByCourseString(String course) {
         String[] parts = course.split("/ ");
         if (parts.length == 2) {
-            System.out.println(parts[0]);
             grade = parts[0];
             if (subject != null) {
                 group = parts[1].substring(subject.length());
@@ -46,7 +45,6 @@ public class Course {
                 group = parts[1];
             }
         } else {
-            System.out.println("E:" + course);
             grade = course;
             group = course;
         }
