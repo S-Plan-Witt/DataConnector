@@ -27,8 +27,14 @@ public class Utils {
 
     public String convertDate(String oldDate) {
         String[] parts = oldDate.split(" ");
-        int month = months.indexOf(parts[2]) + 1;
-
-        return parts[3] + "-" + month + "-" + parts[1].substring(0, parts[1].length() - 1);
+        int monthInt = months.indexOf(parts[2]) + 1;
+        String year = parts[3];
+        String month = Integer.toString(monthInt);
+        String day = parts[1].substring(0, parts[1].length() - 1);
+        if(day.length() == 1){
+            day = 0 + day;
+        }
+        System.out.println(year + "-" + month + "-" + day);
+        return year + "-" + month + "-" + day;
     }
 }

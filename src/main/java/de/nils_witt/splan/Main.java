@@ -7,6 +7,7 @@ package de.nils_witt.splan;
 import com.google.gson.Gson;
 import de.nils_witt.splan.dataModels.Aufsicht;
 import de.nils_witt.splan.dataModels.Course;
+import de.nils_witt.splan.dataModels.Klausur;
 import de.nils_witt.splan.dataModels.VertretungsLesson;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,19 +46,20 @@ public class Main {
         final Config config = configRead;
         initWatchDir(path);
 
-        /*
+
         if(true){
             try {
                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder builder = factory.newDocumentBuilder();
-                InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/vplan.xml")));
+                InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/splank.xml")));
+                //InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/vplanOld.xml")));
                 Document document = builder.parse(in);
                 processFile(document,logger,config);
 
             } catch (Exception e){
                 e.printStackTrace();
             }
-        }*/
+        }
 
         startWatcher(path, logger, config);
 
@@ -269,6 +272,14 @@ public class Main {
                     logger.info("Vplan");
                     vplanFileReader(document, logger, config);
                     break;
+                case "sp":
+                    logger.info("Stundenplan");
+                    stundenplanFileReader(document, logger, config);
+                    break;
+                case "dataroot":
+                    logger.info("Klausuren");
+                    klausurenFileReader(document, logger, config);
+                    break;
                 default:
                     logger.info(nodeName);
             }
@@ -372,15 +383,144 @@ public class Main {
                     }
                 }
             }
-
-            Gson gson = new Gson();
-
             //Vertretungen Array als Json String an die Vergleichs Methode übergeben
-            compareLocalWithApi(lessons, logger, config);
+            compareVplanLocalWithApi(lessons, logger, config);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static void stundenplanFileReader(Document document, Logger logger, Config config){
+        Stundenplan stundenplan = new Stundenplan();
+        int length;
+
+        try {
+            //Laden der base node Unterelemente
+            NodeList nl = document.getLastChild().getChildNodes();
+
+            length = nl.getLength();
+
+            for (int i = 0; i < length; i++) {
+                //Ünerprüfen, dass das Element eine Node ist
+                if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) {
+                    NodeList nodeList =  nl.item(i).getChildNodes();
+                    String grade = "Q1";
+                    for(int header = 0; header < nodeList.getLength(); header++){
+                        if (nodeList.item(header).getNodeType() == Node.ELEMENT_NODE) {
+                            Element el = (Element) nodeList.item(header);
+
+                            switch (el.getTagName()) {
+                                case "haupt":
+                                    //System.out.println("Haupt");
+                                    stundenplan.hauptToLessons(el,grade);
+                                    break;
+                                case "kopf":
+                                    //System.out.println("Kopf");
+                                    stundenplan.kopfToLessons(el);
+                                    break;
+                                default:
+                                    System.out.println(el.getTagName());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private static void klausurenFileReader(Document document, Logger logger, Config config){
+        //$unixdatum = ($exceldatum - 25569) * 86400;
+        int length;
+        Gson gson = new Gson();
+        ArrayList<Klausur> klausuren = new ArrayList<>();
+        try {
+            //Laden der base node Unterelemente
+            NodeList nl = document.getLastChild().getChildNodes();
+
+            length = nl.getLength();
+
+            for (int i = 0; i < length; i++) {
+                //Ünerprüfen, dass das Element eine Node ist
+                if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) {
+                    try {
+                        Element el = (Element) nl.item(i);
+                        Klausur klausur = new Klausur();
+
+                        String datum = el.getElementsByTagName("datum").item(0).getTextContent();
+                        long dateInt = (long) (Integer.parseInt(datum) - 25569) * 86400000;
+                        LocalDate date = new Timestamp(dateInt).toLocalDateTime().toLocalDate();;
+                        klausur.setDate(date.toString());
+
+                        String stufe = el.getElementsByTagName("stufe").item(0).getTextContent();
+                        klausur.setGrade(stufe);
+                        String room = el.getElementsByTagName("raum").item(0).getTextContent();
+                        klausur.setRoom(room);
+                        String teacher = el.getElementsByTagName("lehrer").item(0).getTextContent();
+                        String[] parts = teacher.split(" ");
+                        if(parts.length == 2){
+                            klausur.setTeacher(parts[0]);
+                            try {
+                                klausur.setStudents(Integer.parseInt(parts[1]));
+                            }catch (Exception e){
+                                e.printStackTrace();
+                            }
+
+                        }
+
+                        String kurs = el.getElementsByTagName("kurs").item(0).getTextContent();
+                        parts = kurs.split("-");
+                        if(parts.length == 2){
+                            klausur.setGroup(parts[1]);
+                            klausur.setSubject(parts[0]);
+                        }
+                        if(el.getElementsByTagName("anzeigen").getLength() == 1){
+                            klausur.setDisplay(1);
+                        }else {
+                            klausur.setDisplay(0);
+                        }
+
+                        String fromTo = el.getElementsByTagName("stunde").item(0).getTextContent();
+                        try {
+                            //7:50-9:20
+                            parts = fromTo.split("-");
+
+                            if(parts.length == 2){
+                                String[] from = parts[0].split(":");
+                                if(from.length != 2){
+                                    from = parts[0].split("\\.");
+                                }
+
+                                if(from.length == 2){
+                                    klausur.setFrom(from[0].concat(":").concat(from[1]));
+                                }
+
+                                String[] to = parts[1].split(":");
+                                if(to.length != 2){
+                                    to = parts[1].split("\\.");
+                                }
+
+                                if(to.length == 2){
+                                    klausur.setTo(to[0].concat(":").concat(to[1]));
+                                }
+                            }
+                            klausuren.add(klausur);
+                        } catch (Exception e){
+                            e.printStackTrace();
+                        }
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        System.out.println(gson.toJson(klausuren));
+
     }
 
     /**
@@ -389,7 +529,7 @@ public class Main {
      * @param logger
      * @param config
      */
-    private static void compareLocalWithApi(List<VertretungsLesson> lessons, @NotNull Logger logger, @NotNull Config config){
+    private static void compareVplanLocalWithApi(List<VertretungsLesson> lessons, @NotNull Logger logger, @NotNull Config config){
         OkHttpClient client = new OkHttpClient();
         Gson gson = new Gson();
         ArrayList<String> dates = new ArrayList<>();
@@ -412,7 +552,7 @@ public class Main {
         for (String date : dates){
 
             Request request = new Request.Builder()
-                    .url("https://api.nils-witt.codes/vertretungen/date/".concat(date))
+                    .url("https://api.nils-witt.de/vertretungen/date/".concat(date))
                     .addHeader("Authorization", "Bearer ".concat(config.getBearer()))
                     .build();
 
@@ -488,7 +628,7 @@ public class Main {
 
         //Http Request erstellen inkl. Daten und des authorization Tokens
         Request request = new Request.Builder()
-                .url("https://api.nils-witt.codes" + urlPath)
+                .url("https://api.nils-witt.de" + urlPath)
                 .post(body)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer ".concat(config.getBearer()))
@@ -544,7 +684,6 @@ public class Main {
      * @param title   Title of the message(short)
      * @param message the message, longer desctipion or message body
      */
-
     private static void displayTrayNotification(String title, String message) {
         try {
             SystemTray tray = SystemTray.getSystemTray();
