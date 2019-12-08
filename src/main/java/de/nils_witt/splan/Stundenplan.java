@@ -6,18 +6,69 @@ package de.nils_witt.splan;
 
 import com.google.gson.Gson;
 import de.nils_witt.splan.dataModels.Lesson;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 public class Stundenplan {
+    private Logger logger;
+    private Api api;
+    private Gson gson = new Gson();
 
-    public void hauptToLessons(Element hauptDOM,String grade){
+    public Stundenplan(Logger logger, Api api) {
+        this.logger = logger;
+        this.api = api;
+    }
+
+    public void readDocument(Document document){
+        int length;
+
+        try {
+            //Laden der base node Unterelemente
+            NodeList nl = document.getLastChild().getChildNodes();
+
+            length = nl.getLength();
+
+            for (int i = 0; i < length; i++) {
+                //Ünerprüfen, dass das Element eine Node ist
+                if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) {
+                    NodeList nodeList =  nl.item(i).getChildNodes();
+                    String grade = null;
+                    for(int header = 0; header < nodeList.getLength(); header++){
+                        if (nodeList.item(header).getNodeType() == Node.ELEMENT_NODE) {
+                            Element el = (Element) nodeList.item(header);
+
+                            switch (el.getTagName()) {
+                                case "haupt":
+                                    //System.out.println("Haupt");
+                                    ArrayList<Lesson> lessons = hauptToLessons(el, grade);
+                                    api.addLessons(lessons);
+                                    break;
+                                case "kopf":
+                                    grade = kopfToGrade(el);
+                                    System.out.println(grade);
+                                    break;
+                                default:
+                                    System.out.println(el.getTagName());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+    public ArrayList<Lesson> hauptToLessons(Element hauptDOM,String grade){
         NodeList lessons = hauptDOM.getChildNodes();
         ArrayList<Lesson> lessonArrayList = new ArrayList<>();
-        Gson gson = new Gson();
+
         int lessonsLenght = lessons.getLength();
 
         for(int i = 0; i < lessonsLenght; i++){
@@ -50,38 +101,42 @@ public class Stundenplan {
                                 lessonModel.setSubject(lessonCourse.getElementsByTagName("fach").item(0).getTextContent());
                                 lessonModel.setLesson(lessonNumber);
                                 lessonModel.setDay(Integer.parseInt(lessonCourse.getTagName().substring(3)));
-                                lessonModel.setGrade(lessonCourse.getElementsByTagName("klasse").item(0).getTextContent());
-                                lessonModel.setGroup(lessonCourse.getElementsByTagName("gruppe").item(0).getTextContent().substring(lessonModel.getSubject().length()).replaceAll("\\s",""));
-                                String teacher = lessonCourse.getElementsByTagName("lehrer").item(0).getTextContent().substring(0,3);
-                                lessonModel.setTeacher(teacher);
-                                lessonModel.setRoom(lessonCourse.getElementsByTagName("raum").item(0).getTextContent());
+                                lessonModel.setGrade(grade);
+                                lessonModel.setGroup(grade);
 
-                                lessonArrayList.add(lessonModel);
+                                if(lessonCourse.getElementsByTagName("gruppe").getLength() > 0){
+                                    lessonModel.setGroup(lessonCourse.getElementsByTagName("gruppe").item(0).getTextContent().substring(lessonModel.getSubject().length()).replaceAll("\\s",""));
+                                }
+                                if(lessonCourse.getElementsByTagName("lehrer").getLength() > 0){
+                                    String teacher = lessonCourse.getElementsByTagName("lehrer").item(0).getTextContent().substring(0,3);
+                                    lessonModel.setTeacher(teacher);
+                                }
+                                if(lessonCourse.getElementsByTagName("raum").getLength() > 0){
+                                    lessonModel.setRoom(lessonCourse.getElementsByTagName("raum").item(0).getTextContent());
+                                }
+                                if(!lessonModel.getSubject().equals("") && lessonModel.getTeacher() != null){
+                                    lessonArrayList.add(lessonModel);
+                                }
+
                             } catch (Exception e){
-                                //e.printStackTrace();
+                                e.printStackTrace();
                             }
                         }
                     }
                 }
             }
-
         }
-        System.out.println(gson.toJson(lessonArrayList));
+        return lessonArrayList;
     }
 
-    public void kopfToLessons(Element lessons){
-        System.out.println(lessons.getTagName());
-        /*
-        int lessonsLenght = lessons.getLength();
-
-        for(int i = 0; i < lessonsLenght; i++){
-            if (lessons.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                Element lesson = (Element)lessons.item(i);
-                if(lesson.getTagName() == "title"){
-                    System.out.println(lesson.getTextContent());
-                }
+    public String kopfToGrade(Element kopf){
+        String grade = null;
+        NodeList elements = kopf.getElementsByTagName("titel");
+        for(int i = 0; i < elements.getLength(); i++){
+            if(elements.item(i).getNodeType() == Node.ELEMENT_NODE){
+                grade = elements.item(i).getTextContent();
             }
-
-        }*/
+        }
+        return grade;
     }
 }

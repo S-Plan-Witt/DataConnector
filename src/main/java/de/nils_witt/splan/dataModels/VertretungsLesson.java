@@ -96,4 +96,8 @@ public class VertretungsLesson {
     public String getVertretungsID() {
         return vertretungsID;
     }
+
+    public void setVertretungsID(String vertretungsID) {
+        this.vertretungsID = vertretungsID;
+    }
 }

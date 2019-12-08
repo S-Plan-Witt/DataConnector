@@ -5,27 +5,15 @@
 package de.nils_witt.splan;
 
 import com.google.gson.Gson;
-import de.nils_witt.splan.dataModels.Aufsicht;
-import de.nils_witt.splan.dataModels.Course;
-import de.nils_witt.splan.dataModels.Klausur;
-import de.nils_witt.splan.dataModels.VertretungsLesson;
-import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,22 +34,38 @@ public class Main {
         final Config config = configRead;
         initWatchDir(path);
 
+        Api api = new Api(logger, config.getUrl());
+        if(!api.verifyBearer(config.getBearer())){
+            return;
+        }
 
-        if(true){
+        Vertretungsplan vertretungsplan = new Vertretungsplan(logger, api);
+        Stundenplan stundenplan = new Stundenplan(logger, api);
+        Klausurplan klausurenplan = new Klausurplan(logger, api);
+
+        CustomWatcher customWatcher = new CustomWatcher(vertretungsplan, stundenplan, klausurenplan, logger, config, path);
+
+        try {
+            customWatcher.start();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+        if(false){
             try {
                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder builder = factory.newDocumentBuilder();
-                InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/splank.xml")));
-                //InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/vplanOld.xml")));
+                //InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/splank.xml")));
+                InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/klausuren.xml")));
+                //InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/Vertretungsplan Lehrer.xml")));
                 Document document = builder.parse(in);
-                processFile(document,logger,config);
+                customWatcher.fileProccessor(document);
 
             } catch (Exception e){
                 e.printStackTrace();
             }
         }
-
-        startWatcher(path, logger, config);
 
     }
 
@@ -111,11 +115,6 @@ public class Main {
         return logger;
     }
 
-    /**
-     * Überprüfen ob das Verzeichnis für die Datein zum einlesen vorhanden ist, ggf. wenn nicht vorhanden wird dieses erstellt
-     *
-     * @param path to a folder (working directory)
-     */
     private static void initWatchDir(@NotNull String path) {
         Path watchDir = Paths.get(path.concat("/watchDir"));
 
@@ -129,13 +128,6 @@ public class Main {
         }
     }
 
-    /**
-     * Config.json laden
-     *
-     * @param logger
-     * @param path   to config.json
-     * @return return config if successful loaded the file
-     */
     private static Config loadConfig(Logger logger, String path) {
         Gson gson = new Gson();
         Config config = null;
@@ -157,10 +149,6 @@ public class Main {
                 //String der Datei in in Config Objekt laden.
                 config = gson.fromJson(fileAsString, Config.class);
                 //Überprüfen ob die config gültig ist.
-                if (!verifyBearer(logger, config.getBearer(), config.getUrl())) {
-                    //Falls nicht config null setzen.
-                    config = null;
-                }
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Error while reading config: ", e);
             }
@@ -173,518 +161,12 @@ public class Main {
     }
 
     /**
-     * Überprüfen der Gültigkeit des Zugriffstoken auf die Api
-     *
-     * @param logger
-     * @param bearer token for api access
-     * @param url    base api url
-     * @return validity of bearer to given url
-     */
-    private static boolean verifyBearer(Logger logger, String bearer, @NotNull String url) {
-        OkHttpClient client = new OkHttpClient();
-        boolean isValid = false;
-        Request request = new Request.Builder()
-                .url(url.concat("/user"))
-                .addHeader("Authorization", "Bearer ".concat(bearer))
-                .build();
-        try {
-            Response response = client.newCall(request).execute();
-            // Api gibt den status 200 zurück, wenn alles  gültig ist.
-            if (response.code() == 200) {
-                isValid = true;
-                logger.info("Bearer valid");
-            } else {
-                logger.log(Level.WARNING, "Bearer invalid");
-            }
-        } catch (java.net.UnknownHostException e) {
-            //URL der Api ist nicht gültig
-            logger.log(Level.WARNING, "Host not found", e);
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Exception while verifying Bearer", e);
-        }
-
-        return isValid;
-    }
-
-    /**
-     * Startet die Ünerwachung des Verzeichnisses in das die XMLs gespeichert werden sollen und
-     * verarbeitet diese bei einer Änderung
-     *
-     * @param path   path to data directry where the watcher should start
-     * @param logger
-     * @param config Object containtig url and bearer
-     */
-    private static void startWatcher(@NotNull String path, Logger logger, Config config) {
-        //Pfad zum Ordner erstellen
-        Path watchPath = Paths.get(path.concat("/watchDir"));
-        try {
-            //Dienset zu Überwachung erstellen
-            WatchService watchService = watchPath.getFileSystem().newWatchService();
-            //Dienst aktivieren und nur Änderungen an Dateien überwachen
-            watchPath.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
-            logger.info("Started Watcher");
-            while (true) {
-                //Laden der Änderungen seit dem letzten Aufruf
-                final WatchKey wk = watchService.take();
-                //Jede Änderung verarbeiten
-                for (WatchEvent<?> event : wk.pollEvents()) {
-                    //Datei, die geändert wurde, laden
-                    final Path changed = (Path) event.context();
-
-                    //Neues Dokument erstellen, in das die geänderte Datei geladen werden soll
-                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder builder = factory.newDocumentBuilder();
-                    InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/").concat(changed.getFileName().toString())));
-                    //Datei in Dokument laden
-                    Document document = builder.parse(in);
-
-                    //Weitere Verarbeitung der Datei/Dokuments
-                    processFile(document, logger, config);
-                }
-                //TODO wat is dat
-                wk.reset();
-            }
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Error in Watcher: ", e);
-        }
-    }
-
-    /**
-     * Ermitteln des Dokumenttypens und Übergabe an die jeweilige Methode zur Weiterverarbeitung
-     *
-     * @param document
-     * @param logger
-     * @param config
-     */
-
-    private static void processFile(Document document, Logger logger, Config config) {
-        try {
-            String nodeName;
-            //Laden der base XML node, anhand dieser kann der Inhaltstyp ermittelt werden
-            nodeName = document.getLastChild().getNodeName();
-            if (config.getTrayNotifications()) {
-                displayTrayNotification("Änderung erkannt", "Datei: ".concat(nodeName));
-            }
-
-            switch (nodeName) {
-                //vp = Vertretungsplan
-                case "vp":
-                    logger.info("Vplan");
-                    vplanFileReader(document, logger, config);
-                    break;
-                case "sp":
-                    logger.info("Stundenplan");
-                    stundenplanFileReader(document, logger, config);
-                    break;
-                case "dataroot":
-                    logger.info("Klausuren");
-                    klausurenFileReader(document, logger, config);
-                    break;
-                default:
-                    logger.info(nodeName);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Laden der Daten aus der XML und Übergabe der Json an die Methode zur Übertragung an die API
-     *
-     * @param document
-     * @param logger
-     * @param config
-     */
-
-    private static void vplanFileReader(Document document, Logger logger, Config config) {
-        String currentDate = "";
-        List<VertretungsLesson> lessons = new ArrayList<>();
-        List<Aufsicht> aufsichten = new ArrayList<>();
-        Utils utils = new Utils();
-        int length;
-
-        try {
-            //Laden der base node Unterelemente
-            NodeList nl = document.getLastChild().getChildNodes();
-
-            length = nl.getLength();
-
-            for (int i = 0; i < length; i++) {
-                //Ünerprüfen, dass das Element eine Node ist
-                if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                    Element el = (Element) nl.item(i);
-                    /*
-                    Jeder Tag hat drei Nodes Kopf, Haupt und Aufsichen. Der Kopf bestimmt das Datum für die Folgenden Haput und Aufsichent Teile.
-                    Die Teile Haupt und Aufsichen haben Unterelement, die die jeweiligen Events beschreiben (ein Event pro Vertretung / Aufsicht)
-                     */
-                    //Typ der Node bestimmen
-                    switch (el.getTagName()) {
-                        case "kopf":
-                            //Das Datum der XML in das Format yyyy-mm-dd konvertieren, wie es von der Api erfordert wird, mithilfe der Utils Klasse.
-                            currentDate = utils.convertDate(el.getElementsByTagName("titel").item(0).getTextContent());
-                            break;
-                        case "haupt":
-                            //Laden aller Unterelement = Vertretungen
-                            NodeList aktionen = el.getChildNodes();
-                            for (int k = 0; k < aktionen.getLength(); k++) {
-                                if (aktionen.item(k).getNodeType() == Node.ELEMENT_NODE) {
-                                    //Neues Object laden und Daten aus der Node übertragen
-                                    VertretungsLesson lesson = new VertretungsLesson();
-
-                                    Element aktion = (Element) aktionen.item(k);
-
-                                    lesson.setLesson(aktion.getElementsByTagName("stunde").item(0).getTextContent());
-                                    lesson.setInfo(aktion.getElementsByTagName("info").item(0).getTextContent());
-                                    lesson.setChangedSubject(aktion.getElementsByTagName("vfach").item(0).getTextContent());
-                                    String changedTeacher = aktion.getElementsByTagName("vlehrer").item(0).getTextContent();
-                                    if ("(".concat(aktion.getElementsByTagName("lehrer").item(0).getTextContent()).concat(")").equals(changedTeacher)) {
-                                        lesson.setChangedTeacher("---");
-                                    } else {
-                                        lesson.setChangedTeacher(changedTeacher);
-                                    }
-
-                                    lesson.setChangedRoom(aktion.getElementsByTagName("vraum").item(0).getTextContent());
-                                    //Setzen das Datums, das im Kopf ausgelesen wurde
-                                    lesson.setDate(currentDate);
-                                    //Seperates Splitten der Kursbezeichnung in Stufe, Fach und Gruppe
-                                    Course course = new Course();
-                                    course.setSubject(aktion.getElementsByTagName("fach").item(0).getTextContent());
-                                    course.updateByCourseString(aktion.getElementsByTagName("klasse").item(0).getTextContent());
-                                    lesson.setSubject(course.getSubject());
-                                    lesson.setGrade(course.getGrade());
-                                    lesson.setGroup(course.getGroup());
-                                    //Vertretung dem Array aller Vertretungen hinzufügen
-                                    lessons.add(lesson);
-                                }
-                            }
-                            break;
-                        case "aufsichten":
-                            NodeList nodeAufsichtenChilds = el.getChildNodes();
-                            for (int k = 0; k < nodeAufsichtenChilds.getLength(); k++) {
-                                if (nodeAufsichtenChilds.item(k).getNodeType() == Node.ELEMENT_NODE) {
-
-                                    Element elementAufsicht = (Element) nodeAufsichtenChilds.item(k);
-                                    String aufsichtInfo = elementAufsicht.getElementsByTagName("aufsichtinfo").item(0).getTextContent();
-
-                                    String[] parts = aufsichtInfo.split(" - ");
-                                    String[] parts2 = parts[1].split(" {2}--> {2}");
-
-                                    Aufsicht aufsicht = new Aufsicht();
-
-                                    aufsicht.setLocation(parts2[0]);
-                                    aufsicht.setTeacher(parts2[1]);
-                                    aufsicht.setTime(parts[0]);
-
-                                    aufsichten.add(aufsicht);
-                                }
-                            }
-                            break;
-                    }
-                }
-            }
-            //Vertretungen Array als Json String an die Vergleichs Methode übergeben
-            compareVplanLocalWithApi(lessons, logger, config);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void stundenplanFileReader(Document document, Logger logger, Config config){
-        Stundenplan stundenplan = new Stundenplan();
-        int length;
-
-        try {
-            //Laden der base node Unterelemente
-            NodeList nl = document.getLastChild().getChildNodes();
-
-            length = nl.getLength();
-
-            for (int i = 0; i < length; i++) {
-                //Ünerprüfen, dass das Element eine Node ist
-                if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                    NodeList nodeList =  nl.item(i).getChildNodes();
-                    String grade = "Q1";
-                    for(int header = 0; header < nodeList.getLength(); header++){
-                        if (nodeList.item(header).getNodeType() == Node.ELEMENT_NODE) {
-                            Element el = (Element) nodeList.item(header);
-
-                            switch (el.getTagName()) {
-                                case "haupt":
-                                    //System.out.println("Haupt");
-                                    stundenplan.hauptToLessons(el,grade);
-                                    break;
-                                case "kopf":
-                                    //System.out.println("Kopf");
-                                    stundenplan.kopfToLessons(el);
-                                    break;
-                                default:
-                                    System.out.println(el.getTagName());
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    private static void klausurenFileReader(Document document, Logger logger, Config config){
-        //$unixdatum = ($exceldatum - 25569) * 86400;
-        int length;
-        Gson gson = new Gson();
-        ArrayList<Klausur> klausuren = new ArrayList<>();
-        try {
-            //Laden der base node Unterelemente
-            NodeList nl = document.getLastChild().getChildNodes();
-
-            length = nl.getLength();
-
-            for (int i = 0; i < length; i++) {
-                //Ünerprüfen, dass das Element eine Node ist
-                if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                    try {
-                        Element el = (Element) nl.item(i);
-                        Klausur klausur = new Klausur();
-
-                        String datum = el.getElementsByTagName("datum").item(0).getTextContent();
-                        long dateInt = (long) (Integer.parseInt(datum) - 25569) * 86400000;
-                        LocalDate date = new Timestamp(dateInt).toLocalDateTime().toLocalDate();;
-                        klausur.setDate(date.toString());
-
-                        String stufe = el.getElementsByTagName("stufe").item(0).getTextContent();
-                        klausur.setGrade(stufe);
-                        String room = el.getElementsByTagName("raum").item(0).getTextContent();
-                        klausur.setRoom(room);
-                        String teacher = el.getElementsByTagName("lehrer").item(0).getTextContent();
-                        String[] parts = teacher.split(" ");
-                        if(parts.length == 2){
-                            klausur.setTeacher(parts[0]);
-                            try {
-                                klausur.setStudents(Integer.parseInt(parts[1]));
-                            }catch (Exception e){
-                                e.printStackTrace();
-                            }
-
-                        }
-
-                        String kurs = el.getElementsByTagName("kurs").item(0).getTextContent();
-                        parts = kurs.split("-");
-                        if(parts.length == 2){
-                            klausur.setGroup(parts[1]);
-                            klausur.setSubject(parts[0]);
-                        }
-                        if(el.getElementsByTagName("anzeigen").getLength() == 1){
-                            klausur.setDisplay(1);
-                        }else {
-                            klausur.setDisplay(0);
-                        }
-
-                        String fromTo = el.getElementsByTagName("stunde").item(0).getTextContent();
-                        try {
-                            //7:50-9:20
-                            parts = fromTo.split("-");
-
-                            if(parts.length == 2){
-                                String[] from = parts[0].split(":");
-                                if(from.length != 2){
-                                    from = parts[0].split("\\.");
-                                }
-
-                                if(from.length == 2){
-                                    klausur.setFrom(from[0].concat(":").concat(from[1]));
-                                }
-
-                                String[] to = parts[1].split(":");
-                                if(to.length != 2){
-                                    to = parts[1].split("\\.");
-                                }
-
-                                if(to.length == 2){
-                                    klausur.setTo(to[0].concat(":").concat(to[1]));
-                                }
-                            }
-                            klausuren.add(klausur);
-                        } catch (Exception e){
-                            e.printStackTrace();
-                        }
-                    } catch (Exception e){
-                        e.printStackTrace();
-                    }
-                }
-            }
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-
-        System.out.println(gson.toJson(klausuren));
-
-    }
-
-    /**
-     * Vergleichen der Lokalen update Datei mit den auf dem Server vorhandenen Vertretungen
-     * @param lessons
-     * @param logger
-     * @param config
-     */
-    private static void compareVplanLocalWithApi(List<VertretungsLesson> lessons, @NotNull Logger logger, @NotNull Config config){
-        OkHttpClient client = new OkHttpClient();
-        Gson gson = new Gson();
-        ArrayList<String> dates = new ArrayList<>();
-        ArrayList<VertretungsLesson> lessonsServer = new ArrayList<>();
-        ArrayList<String> lessonsServerId = new ArrayList<>();
-        ArrayList<String> lessonsLocal = new ArrayList<>();
-        //Get from all lesson the dates and add them to unique list
-        for (VertretungsLesson lesson : lessons) {
-            if(!dates.contains(lesson.getDate())){
-                dates.add(lesson.getDate());
-            }
-            LocalDate date = LocalDate.parse(lesson.getDate());
-
-
-            String id = lesson.getGrade().concat("-").concat(lesson.getSubject()).concat("-").concat(lesson.getGroup()).concat("-").concat(lesson.getLesson()).concat("-").concat(String.valueOf(date.getDayOfWeek().getValue())).concat("-").concat(lesson.getDate());
-            lessonsLocal.add(id);
-        }
-
-        //Load vertretungen for each day
-        for (String date : dates){
-
-            Request request = new Request.Builder()
-                    .url("https://api.nils-witt.de/vertretungen/date/".concat(date))
-                    .addHeader("Authorization", "Bearer ".concat(config.getBearer()))
-                    .build();
-
-            try {
-                Response response = client.newCall(request).execute();
-                String json = response.body().string();
-                VertretungsLesson[] vertretungsLesson = gson.fromJson(json, VertretungsLesson[].class);
-                for (VertretungsLesson lesson : vertretungsLesson) {
-                    lessonsServerId.add(lesson.getVertretungsID());
-                    lessonsServer.add(lesson);
-                }
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-        //System.out.println(gson.toJson(lessonsServer));
-        //System.out.println(gson.toJson(lessonsLocal));
-
-        System.out.println(lessons.size());
-        System.out.println(lessonsLocal.size());
-        ArrayList<String> removedLessons = new ArrayList<>();
-        ArrayList<String> updatedLessons = new ArrayList<>();
-        for (VertretungsLesson vertretungsLesson : lessonsServer) {
-            if(!lessonsLocal.contains(vertretungsLesson.getVertretungsID())) {
-                //System.out.println("removed: ".concat(vertretungsLesson.getVertretungsID()));
-                removedLessons.add(vertretungsLesson.getVertretungsID());
-            }else {
-                int pos = lessonsLocal.indexOf(vertretungsLesson.getVertretungsID());
-                VertretungsLesson localLesson = lessons.get(pos);
-                if(!(vertretungsLesson.getChangedRoom().equals(localLesson.getChangedRoom()) && vertretungsLesson.getChangedTeacher().equals(localLesson.getChangedTeacher()) && vertretungsLesson.getChangedSubject().equals(localLesson.getChangedSubject() ))){
-                    //System.out.println("updated: ".concat(vertretungsLesson.getVertretungsID()));
-                    updatedLessons.add(vertretungsLesson.getVertretungsID());
-                }
-
-
-
-            }
-        }
-        ArrayList<String> addedLessons = new ArrayList<>();
-        for (String lesson : lessonsLocal) {
-            if(!lessonsServerId.contains(lesson)){
-                //System.out.println("added: ".concat(lesson).concat(",").concat(String.valueOf(lessonsLocal.indexOf(lesson))));
-                addedLessons.add(lesson);
-            }
-
-        }
-
-        System.out.println("removed:".concat(gson.toJson(removedLessons)));
-        System.out.println("added:".concat(gson.toJson(addedLessons)));
-        System.out.println("updated:".concat(gson.toJson(updatedLessons)));
-        uploadToApi(gson.toJson(lessons),"/vertretungen", config, logger);
-
-        for (String lesson : removedLessons) {
-            deleteFromApi("/vertretungen/id/".concat(lesson),config, logger);
-        }
-
-    }
-
-    /**
-     * Die Payload wird an die in der Config angegebene Url, mit dem übergebene Pfad, übertragen
-     *
-     * @param payload
-     * @param urlPath
-     * @param config
-     * @param logger
-     */
-    private static void uploadToApi(String payload, String urlPath, @NotNull Config config, @NotNull Logger logger) {
-
-        //Setzen des Datentypes der Übertragen wird.
-        MediaType mediaType = MediaType.parse("application/json");
-        //Erstellen der Daten die Übertragen werden.
-        RequestBody body = RequestBody.create(mediaType, payload);
-
-        //Http Request erstellen inkl. Daten und des authorization Tokens
-        Request request = new Request.Builder()
-                .url("https://api.nils-witt.de" + urlPath)
-                .post(body)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer ".concat(config.getBearer()))
-                .build();
-        ApiRequest(config, logger, request);
-    }
-
-    /**
-     * Die Payload wird an die in der Config angegebene Url, mit dem übergebene Pfad, übertragen
-     *
-     * @param urlPath
-     * @param config
-     * @param logger
-     */
-    private static void deleteFromApi(String urlPath, @NotNull Config config, @NotNull Logger logger) {
-
-        //Http Request erstellen inkl. Daten und des authorization Tokens
-        Request request = new Request.Builder()
-                .url("https://api.nils-witt.codes" + urlPath)
-                .delete()
-                .addHeader("Authorization", "Bearer ".concat(config.getBearer()))
-                .build();
-        ApiRequest(config, logger, request);
-    }
-
-    /**
-     * Api Anfragen ausführen
-     * @param config
-     * @param logger
-     * @param request
-     */
-    private static void ApiRequest(@NotNull Config config, @NotNull Logger logger, Request request) {
-        OkHttpClient client = new OkHttpClient();
-        try {
-            //Anfrage an Api senden
-            Response response = client.newCall(request).execute();
-            if (response.code() == 200) {
-                if (config.getTrayNotifications()) {
-                    displayTrayNotification("Upload erfolgreich", "Vertretungsplan zur API übertragen");
-                }
-
-            }
-            logger.info(response.toString());
-            response.close();
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Error", e);
-        }
-    }
-
-    /**
      * Anzeigen einer Traynotification in Windows oder eines Fensters in macOS
      *
      * @param title   Title of the message(short)
      * @param message the message, longer desctipion or message body
      */
-    private static void displayTrayNotification(String title, String message) {
+    static void displayTrayNotification(String title, String message) {
         try {
             SystemTray tray = SystemTray.getSystemTray();
             Image image = Toolkit.getDefaultToolkit().createImage("info.png");
@@ -697,4 +179,5 @@ public class Main {
             e.printStackTrace();
         }
     }
+
 }
