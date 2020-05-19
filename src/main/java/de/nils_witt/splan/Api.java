@@ -142,7 +142,90 @@ public class Api {
 
         RequestBody body = RequestBody.create(mediaType, gson.toJson(lessons));
         Request request = new Request.Builder()
-                .url("https://api.nils-witt.de".concat("/lessons"))
+                .url(backend.concat("/timetable/lessons"))
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            System.out.println(response.code());
+            response.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return;
+    }
+
+    public Lesson[] getLessonByTeacherDayLesson(LessonRequest lessonRequest){
+        RequestBody body = RequestBody.create(mediaType, gson.toJson(lessonRequest));
+
+        Request request = new Request.Builder()
+                .url(backend.concat("/timetable/find/course"))
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            assert response.body() != null;
+            String json = response.body().string();
+            response.close();
+            return gson.fromJson(json, Lesson[].class);
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+
+
+    }
+
+    public VertretungsLesson[] getReplacementLessonById(String id){
+
+        Request request = new Request.Builder()
+                .url(backend.concat("/vertretungen/id/").concat(id))
+                .get()
+                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            String json = response.body().string();
+            response.close();
+            return gson.fromJson(json, VertretungsLesson[].class);
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public VertretungsLesson[] getReplacementLessonByFilter(String info){
+
+        RequestBody body = RequestBody.create(mediaType, "{\"info\":\"" + info + "\"}");
+
+        Request request = new Request.Builder()
+                .url(backend.concat("/vertretungen/find/"))
+                .post(body)
+                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            String json = response.body().string();
+            response.close();
+            return gson.fromJson(json, VertretungsLesson[].class);
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void addExams(ArrayList<Klausur> exams){
+        RequestBody body = RequestBody.create(mediaType, gson.toJson(exams));
+        System.out.println(gson.toJson(exams));
+        Request request = new Request.Builder()
+                .url(backend.concat("/exams"))
                 .post(body)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer ".concat(bearer))
