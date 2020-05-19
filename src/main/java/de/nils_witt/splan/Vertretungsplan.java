@@ -182,9 +182,9 @@ public class Vertretungsplan {
 
         }
 
-        System.out.println("removed:".concat(gson.toJson(removedLessons)));
-        System.out.println("added:".concat(gson.toJson(addedLessons)));
-        System.out.println("updated:".concat(gson.toJson(updatedLessons)));
+        logger.info("removed:".concat(gson.toJson(removedLessons)));
+        logger.info("added:".concat(gson.toJson(addedLessons)));
+        logger.info("updated:".concat(gson.toJson(updatedLessons)));
 
         for (String lesson : removedLessons) {
             api.deleteVertretung(lesson);
