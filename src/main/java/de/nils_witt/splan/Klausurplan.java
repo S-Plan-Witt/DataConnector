@@ -5,7 +5,7 @@
 package de.nils_witt.splan;
 
 import com.google.gson.Gson;
-import de.nils_witt.splan.dataModels.Klausur;
+import de.nils_witt.splan.dataModels.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -19,7 +19,11 @@ import java.util.logging.Logger;
 public class Klausurplan {
     private Api api;
     private Logger logger;
-
+    private Gson gson = new Gson();
+    ArrayList<VertretungsLesson> vertretungsLessons = new ArrayList<>();
+    ArrayList<String> replacementLessonIds = new ArrayList<>();
+    ArrayList<String> lessonsOnServer = new ArrayList<>();
+    ArrayList<Klausur> exams = new ArrayList<>();
 
     public Klausurplan(Logger logger, Api api) {
         this.logger = logger;
@@ -29,8 +33,15 @@ public class Klausurplan {
 
     public void readDocument(Document document){
         int length;
-        Gson gson = new Gson();
-        ArrayList<Klausur> klausuren = new ArrayList<>();
+
+
+        replacementLessonIds = new ArrayList<>();
+        vertretungsLessons = new ArrayList<>();
+        lessonsOnServer.clear();
+        for (VertretungsLesson vLesson : api.getReplacementLessonByFilter("Klausuraufsicht")) {
+            lessonsOnServer.add(vLesson.getVertretungsID());
+        }
+        //System.out.println(gson.toJson(lessonsOnServer));
         try {
             //Laden der base node Unterelemente
             NodeList nl = document.getLastChild().getChildNodes();
@@ -53,14 +64,15 @@ public class Klausurplan {
                         klausur.setGrade(stufe);
                         String room = el.getElementsByTagName("raum").item(0).getTextContent();
                         klausur.setRoom(room);
-                        String teacher = el.getElementsByTagName("lehrer").item(0).getTextContent();
+                        String teacher = null;
+                        teacher = el.getElementsByTagName("lehrer").item(0).getTextContent();
                         String[] parts = teacher.split(" ");
                         if(parts.length == 2){
                             klausur.setTeacher(parts[0]);
                             try {
                                 klausur.setStudents(Integer.parseInt(parts[1]));
                             }catch (Exception e){
-                                e.printStackTrace();
+                                klausur.setStudents(1);
                             }
 
                         }
@@ -101,13 +113,14 @@ public class Klausurplan {
                                     klausur.setTo(to[0].concat(":").concat(to[1]));
                                 }
                             }
-                            klausuren.add(klausur);
+                            exams.add(klausur);
                         } catch (Exception e){
                             e.printStackTrace();
                         }
-                        createKLVert(el);
+                        //createKLVert(el);
                     } catch (Exception e){
                         //e.printStackTrace();
+                        System.out.println("Error reading Element");
                     }
                 }
             }
@@ -115,8 +128,9 @@ public class Klausurplan {
             e.printStackTrace();
         }
 
-        System.out.println(gson.toJson(klausuren));
-
+        //System.out.println(gson.toJson(vertretungsLessons));
+        api.addVertretungen(vertretungsLessons);
+        //System.out.println(gson.toJson(lessonsOnServer));
     }
 
 
@@ -156,14 +170,51 @@ public class Klausurplan {
                             //System.out.println(element.getTagName());
                     }
                     if(lesson != 0){
-                        System.out.println(lesson.toString() +": "+ element.getTextContent());
+                        String datum = el.getElementsByTagName("datum").item(0).getTextContent();
+                        long dateInt = (long) (Integer.parseInt(datum) - 25569) * 86400000;
+                        LocalDate date = new Timestamp(dateInt).toLocalDateTime().toLocalDate();
+                        LessonRequest lessonRequest = new LessonRequest();
+                        lessonRequest.setLesson(String.valueOf(lesson));
+                        lessonRequest.setTeacher(element.getTextContent());
+                        lessonRequest.setWeekday(String.valueOf(date.getDayOfWeek().getValue()));
+
+                        Lesson[] lessons = api.getLessonByTeacherDayLesson(lessonRequest);
+                        if(lessons.length > 0){
+                            try {
+                                VertretungsLesson vertretungsLesson = new VertretungsLesson();
+                                vertretungsLesson.setChangedTeacher("---");
+                                vertretungsLesson.setChangedRoom("---");
+                                vertretungsLesson.setChangedSubject("---");
+                                vertretungsLesson.setDate(date.toString());
+                                vertretungsLesson.setGrade(lessons[0].getGrade());
+                                vertretungsLesson.setGroup(lessons[0].getGroup());
+                                vertretungsLesson.setLesson(String.valueOf(lessons[0].getLesson()));
+                                vertretungsLesson.setSubject(lessons[0].getSubject());
+                                vertretungsLesson.setInfo("Klausuraufsicht");
+                                vertretungsLesson.genVertretungsID();
+                                if(!replacementLessonIds.contains(vertretungsLesson.getVertretungsID())){
+                                    replacementLessonIds.add(vertretungsLesson.getVertretungsID());
+
+                                    VertretungsLesson[] matchingReplacementLessons = api.getReplacementLessonById(vertretungsLesson.getVertretungsID());
+                                    if(matchingReplacementLessons.length == 0){
+                                        vertretungsLessons.add(vertretungsLesson);
+                                    }
+                                    if(lessonsOnServer.contains(vertretungsLesson.getVertretungsID())){
+                                        lessonsOnServer.remove(vertretungsLesson.getVertretungsID());
+                                    }
+                                }
+                            }catch (Exception e){
+                                e.printStackTrace();
+                            }
+                        }
+
                     }
-
                 }
-
-
             }
-
         }
+    }
+
+    public void pushExams(){
+        api.addExams(exams);
     }
 }
