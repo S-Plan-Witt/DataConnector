@@ -4,6 +4,8 @@
 
 package de.nils_witt.splan.dataModels;
 
+import java.time.LocalDate;
+
 public class VertretungsLesson {
     private String date;
     private String lesson;
@@ -25,7 +27,23 @@ public class VertretungsLesson {
     }
 
     public void setDate(String date) {
-        this.date = date;
+        try {
+            String[] parts = date.split("-");
+            if(parts.length == 3){
+                if (parts[1].length() < 2){
+                    parts[1] = "0".concat(parts[1]);
+                }
+                if (parts[2].length() < 2){
+                    parts[3] = "0".concat(parts[3]);
+                }
+
+                this.date = parts[0].concat("-").concat(parts[1]).concat("-").concat(parts[2]);
+            }
+        }catch (Exception e){
+
+        }
+
+
     }
 
     public String getLesson() {
@@ -99,5 +117,10 @@ public class VertretungsLesson {
 
     public void setVertretungsID(String vertretungsID) {
         this.vertretungsID = vertretungsID;
+    }
+
+    public void genVertretungsID(){
+        LocalDate date = LocalDate.parse(getDate());
+        vertretungsID = getGrade().concat("-").concat(getSubject()).concat("-").concat(getGroup()).concat("-").concat(getLesson()).concat("-").concat(String.valueOf(date.getDayOfWeek().getValue())).concat("-").concat(getDate());
     }
 }
