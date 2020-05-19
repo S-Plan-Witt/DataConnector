@@ -33,6 +33,7 @@ public class Vertretungsplan {
     }
 
     public void readDocument(Document document) {
+        lessons.clear();
         String currentDate = "";
         int length;
 
@@ -157,8 +158,11 @@ public class Vertretungsplan {
 
         for (VertretungsLesson vertretungsLesson : lessonsServer) {
             if(!lessonsLocal.contains(vertretungsLesson.getVertretungsID())) {
-                //System.out.println("removed: ".concat(vertretungsLesson.getVertretungsID()));
-                removedLessons.add(vertretungsLesson.getVertretungsID());
+
+                if(!vertretungsLesson.getInfo().equals("Klausuraufsicht")){
+                    //System.out.println("removed: ".concat(vertretungsLesson.getInfo()));
+                    removedLessons.add(vertretungsLesson.getVertretungsID());
+                }
             }else {
                 int pos = lessonsLocal.indexOf(vertretungsLesson.getVertretungsID());
                 VertretungsLesson localLesson = lessons.get(pos);
