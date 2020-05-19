@@ -86,6 +86,7 @@ public class CustomWatcher {
                 case "dataroot":
                     logger.info("Klausuren");
                     klausurplan.readDocument(document);
+                    klausurplan.pushExams();
                     break;
                 default:
                     logger.info(nodeName);
