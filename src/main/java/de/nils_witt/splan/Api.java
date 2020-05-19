@@ -5,7 +5,9 @@
 package de.nils_witt.splan;
 
 import com.google.gson.Gson;
+import de.nils_witt.splan.dataModels.Klausur;
 import de.nils_witt.splan.dataModels.Lesson;
+import de.nils_witt.splan.dataModels.LessonRequest;
 import de.nils_witt.splan.dataModels.VertretungsLesson;
 import okhttp3.*;
 
@@ -29,7 +31,7 @@ public class Api {
         client = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(180, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -64,7 +66,7 @@ public class Api {
 
     public VertretungsLesson[] getVertretungenByDate(String date){
         Request request = new Request.Builder()
-                .url("https://api.nils-witt.de/vertretungen/date/".concat(date))
+                .url(backend.concat("/replacementLessons/date/").concat(date))
                 .addHeader("Authorization", "Bearer ".concat(bearer))
                 .build();
 
@@ -82,7 +84,7 @@ public class Api {
 
     public void deleteVertretung(String id){
         Request request = new Request.Builder()
-                .url("https://api.nils-witt.de/vertretungen/id/".concat(id))
+                .url(backend.concat("/vertretungen/id/").concat(id))
                 .delete()
                 .addHeader("Authorization", "Bearer ".concat(bearer))
                 .build();
@@ -101,7 +103,7 @@ public class Api {
 
         RequestBody body = RequestBody.create(mediaType, gson.toJson(vertretungen));
         Request request = new Request.Builder()
-                .url("https://api.nils-witt.de".concat("/vertretungen"))
+                .url(backend.concat("/replacementLessons"))
                 .post(body)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer ".concat(bearer))
@@ -121,7 +123,7 @@ public class Api {
 
         RequestBody body = RequestBody.create(mediaType, gson.toJson(vertretung));
         Request request = new Request.Builder()
-                .url("https://api.nils-witt.de".concat("/vertretungen/id/".concat(vertretung.getVertretungsID())))
+                .url(backend.concat("/vertretungen/id/".concat(vertretung.getVertretungsID())))
                 .put(body)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer ".concat(bearer))
