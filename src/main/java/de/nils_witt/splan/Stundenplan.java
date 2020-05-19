@@ -32,6 +32,7 @@ public class Stundenplan {
             NodeList nl = document.getLastChild().getChildNodes();
 
             length = nl.getLength();
+            ArrayList<Lesson> lessons = new ArrayList<>();
 
             for (int i = 0; i < length; i++) {
                 //Ünerprüfen, dass das Element eine Node ist
@@ -45,8 +46,8 @@ public class Stundenplan {
                             switch (el.getTagName()) {
                                 case "haupt":
                                     //System.out.println("Haupt");
-                                    ArrayList<Lesson> lessons = hauptToLessons(el, grade);
-                                    api.addLessons(lessons);
+                                    //lessons = hauptToLessons(el, grade);
+                                    lessons.addAll(hauptToLessons(el, grade));
                                     break;
                                 case "kopf":
                                     grade = kopfToGrade(el);
@@ -59,6 +60,8 @@ public class Stundenplan {
                     }
                 }
             }
+            System.out.println(gson.toJson(lessons));
+            api.addLessons(lessons);
         } catch (Exception e){
             e.printStackTrace();
         }
