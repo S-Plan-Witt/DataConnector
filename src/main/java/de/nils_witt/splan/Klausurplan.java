@@ -39,7 +39,7 @@ public class Klausurplan {
         vertretungsLessons = new ArrayList<>();
         lessonsOnServer.clear();
         for (VertretungsLesson vLesson : api.getReplacementLessonByFilter("Klausuraufsicht")) {
-            lessonsOnServer.add(vLesson.getVertretungsID());
+            lessonsOnServer.add(vLesson.getReplacementId());
         }
         //System.out.println(gson.toJson(lessonsOnServer));
         try {
@@ -182,25 +182,24 @@ public class Klausurplan {
                         if(lessons.length > 0){
                             try {
                                 VertretungsLesson vertretungsLesson = new VertretungsLesson();
-                                vertretungsLesson.setChangedTeacher("---");
-                                vertretungsLesson.setChangedRoom("---");
-                                vertretungsLesson.setChangedSubject("---");
+                                vertretungsLesson.setTeacher("---");
+                                vertretungsLesson.setRoom("---");
+                                vertretungsLesson.setSubject("---");
                                 vertretungsLesson.setDate(date.toString());
-                                vertretungsLesson.setGrade(lessons[0].getGrade());
-                                vertretungsLesson.setGroup(lessons[0].getGroup());
-                                vertretungsLesson.setLesson(String.valueOf(lessons[0].getLesson()));
-                                vertretungsLesson.setSubject(lessons[0].getSubject());
+                                vertretungsLesson.getCourse().setGrade(lessons[0].getCourse().getGrade());
+                                vertretungsLesson.getCourse().setGroup(lessons[0].getCourse().getGroup());
+                                vertretungsLesson.setLessonNumber(lessons[0].getLessonNumber());
+                                vertretungsLesson.getCourse().setSubject(lessons[0].getCourse().getSubject());
                                 vertretungsLesson.setInfo("Klausuraufsicht");
-                                vertretungsLesson.genVertretungsID();
-                                if(!replacementLessonIds.contains(vertretungsLesson.getVertretungsID())){
-                                    replacementLessonIds.add(vertretungsLesson.getVertretungsID());
+                                if(!replacementLessonIds.contains(vertretungsLesson.getReplacementId())){
+                                    replacementLessonIds.add(vertretungsLesson.getReplacementId());
 
-                                    VertretungsLesson[] matchingReplacementLessons = api.getReplacementLessonById(vertretungsLesson.getVertretungsID());
+                                    VertretungsLesson[] matchingReplacementLessons = api.getReplacementLessonById(vertretungsLesson.getReplacementId());
                                     if(matchingReplacementLessons.length == 0){
                                         vertretungsLessons.add(vertretungsLesson);
                                     }
-                                    if(lessonsOnServer.contains(vertretungsLesson.getVertretungsID())){
-                                        lessonsOnServer.remove(vertretungsLesson.getVertretungsID());
+                                    if(lessonsOnServer.contains(vertretungsLesson.getReplacementId())){
+                                        lessonsOnServer.remove(vertretungsLesson.getReplacementId());
                                     }
                                 }
                             }catch (Exception e){

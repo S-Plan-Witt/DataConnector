@@ -142,7 +142,7 @@ public class Api {
 
         RequestBody body = RequestBody.create(mediaType, gson.toJson(vertretung));
         Request request = new Request.Builder()
-                .url(backend.concat("/vertretungen/id/".concat(vertretung.getVertretungsID())))
+                .url(backend.concat("/vertretungen/id/".concat(vertretung.getReplacementId())))
                 .put(body)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer ".concat(bearer))
