@@ -200,7 +200,7 @@ public class Vertretungsplan {
             if(!lessonsServerIds.contains(lesson.getReplacementId())){
                 //System.out.println("added: ".concat(lesson.getReplacementId()).concat(",pos: ").concat(String.valueOf(lessonsLocalIds.indexOf(lesson.getReplacementId()))));
                 addedLessons.add(lesson);
-                System.out.println(lesson.getVertretungsID());
+                //System.out.println(lesson.getReplacementId());
             }
 
         }
