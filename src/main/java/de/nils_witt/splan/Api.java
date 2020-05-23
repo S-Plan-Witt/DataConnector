@@ -82,9 +82,28 @@ public class Api {
 
     }
 
+    public Lesson[] getLessons(){
+        Request request = new Request.Builder()
+                .url(backend.concat("/timeTable/lessons"))
+                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            assert response.body() != null;
+            String json = response.body().string();
+            response.close();
+            return gson.fromJson(json, Lesson[].class);
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
     public void deleteVertretung(String id){
         Request request = new Request.Builder()
-                .url(backend.concat("/vertretungen/id/").concat(id))
+                .url(backend.concat("/replacementLessons/id/").concat(id))
                 .delete()
                 .addHeader("Authorization", "Bearer ".concat(bearer))
                 .build();
@@ -206,7 +225,7 @@ public class Api {
         RequestBody body = RequestBody.create(mediaType, "{\"info\":\"" + info + "\"}");
 
         Request request = new Request.Builder()
-                .url(backend.concat("/vertretungen/find/"))
+                .url(backend.concat("/replacementLessons/find/"))
                 .post(body)
                 .addHeader("Authorization", "Bearer ".concat(bearer))
                 .build();

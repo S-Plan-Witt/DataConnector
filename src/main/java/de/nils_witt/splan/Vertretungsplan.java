@@ -7,6 +7,7 @@ package de.nils_witt.splan;
 import com.google.gson.Gson;
 import de.nils_witt.splan.dataModels.Aufsicht;
 import de.nils_witt.splan.dataModels.Course;
+import de.nils_witt.splan.dataModels.Lesson;
 import de.nils_witt.splan.dataModels.VertretungsLesson;
 
 import org.w3c.dom.Document;
@@ -33,6 +34,12 @@ public class Vertretungsplan {
     }
 
     public void readDocument(Document document) {
+        Lesson[] lessonsApi = api.getLessons();
+        if(lessonsApi.length > 0){
+            System.out.println(gson.toJson(lessonsApi[0]));
+        }
+
+
         lessons.clear();
         String currentDate = "";
         int length;
@@ -67,27 +74,42 @@ public class Vertretungsplan {
 
                                     Element aktion = (Element) aktionen.item(k);
 
-                                    lesson.setLesson(aktion.getElementsByTagName("stunde").item(0).getTextContent());
+                                    lesson.setLessonNumber(Integer.parseInt(aktion.getElementsByTagName("stunde").item(0).getTextContent()));
                                     lesson.setInfo(aktion.getElementsByTagName("info").item(0).getTextContent());
-                                    lesson.setChangedSubject(aktion.getElementsByTagName("vfach").item(0).getTextContent());
+                                    lesson.setSubject(aktion.getElementsByTagName("vfach").item(0).getTextContent());
                                     String changedTeacher = aktion.getElementsByTagName("vlehrer").item(0).getTextContent();
                                     if ("(".concat(aktion.getElementsByTagName("lehrer").item(0).getTextContent()).concat(")").equals(changedTeacher)) {
-                                        lesson.setChangedTeacher("---");
+                                        lesson.setTeacher("---");
                                     } else {
-                                        lesson.setChangedTeacher(changedTeacher);
+                                        lesson.setTeacher(changedTeacher);
                                     }
 
-                                    lesson.setChangedRoom(aktion.getElementsByTagName("vraum").item(0).getTextContent());
+                                    lesson.setRoom(aktion.getElementsByTagName("vraum").item(0).getTextContent());
                                     //Setzen das Datums, das im Kopf ausgelesen wurde
                                     lesson.setDate(currentDate);
                                     //Seperates Splitten der Kursbezeichnung in Stufe, Fach und Gruppe
                                     Course course = new Course();
                                     course.setSubject(aktion.getElementsByTagName("fach").item(0).getTextContent());
                                     course.updateByCourseString(aktion.getElementsByTagName("klasse").item(0).getTextContent());
-                                    lesson.setSubject(course.getSubject());
-                                    lesson.setGrade(course.getGrade());
-                                    lesson.setGroup(course.getGroup());
+                                    lesson.setCourse(course);
                                     //Vertretung dem Array aller Vertretungen hinzufügen
+                                    for (Lesson apiLesson : lessonsApi) {
+                                        if(lesson.getCourse().getGrade().equals(apiLesson.getCourse().getGrade())){
+                                            if (lesson.getCourse().getSubject().equals(apiLesson.getCourse().getSubject())){
+                                                if (lesson.getCourse().getGroup().equals(apiLesson.getCourse().getGroup())){
+                                                    if (lesson.getLessonNumber() == apiLesson.getLessonNumber()){
+                                                        if(lesson.getWeekday() == apiLesson.getDay()){
+                                                            System.out.println("Found:"+ apiLesson.getId());
+                                                            lesson.setLessonId(apiLesson.getId());
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    lesson.genReplacementId();
                                     lessons.add(lesson);
                                 }
                             }
@@ -124,70 +146,72 @@ public class Vertretungsplan {
     }
 
     private void compareVplanLocalWithApi(List<VertretungsLesson> lessons){
-        ArrayList<String> dates = new ArrayList<>();
+        ArrayList<String> localDates = new ArrayList<>();
 
         ArrayList<VertretungsLesson> lessonsServer = new ArrayList<>();
-        ArrayList<String> lessonsServerId = new ArrayList<>();
-        ArrayList<String> lessonsLocal = new ArrayList<>();
+        ArrayList<String> lessonsServerIds = new ArrayList<>();
+        ArrayList<String> lessonsLocalIds = new ArrayList<>();
 
-        ArrayList<String> removedLessons = new ArrayList<>();
+        ArrayList<String> removedLessonsIds = new ArrayList<>();
         ArrayList<VertretungsLesson> updatedLessons = new ArrayList<>();
 
         //Get from all lesson the dates and add them to unique list
         for (VertretungsLesson lesson : lessons) {
-            if(!dates.contains(lesson.getDate())){
-                dates.add(lesson.getDate());
+            if(!localDates.contains(lesson.getDate())){
+                localDates.add(lesson.getDate());
             }
-            LocalDate date = LocalDate.parse(lesson.getDate());
 
-            String id = lesson.getGrade().concat("-").concat(lesson.getSubject()).concat("-").concat(lesson.getGroup()).concat("-").concat(lesson.getLesson()).concat("-").concat(String.valueOf(date.getDayOfWeek().getValue())).concat("-").concat(lesson.getDate());
-            lessonsLocal.add(id);
-            lesson.setVertretungsID(id);
+            lessonsLocalIds.add(lesson.getReplacementId());
         }
 
         //Load vertretungen for each day
-        for (String date : dates){
+        for (String date : localDates){
 
             VertretungsLesson[] vertretungsLesson = api.getVertretungenByDate(date);
             for (VertretungsLesson lesson : vertretungsLesson) {
-                lessonsServerId.add(lesson.getVertretungsID());
+                lesson.genReplacementId();
+                lessonsServerIds.add(lesson.getReplacementId());
                 lessonsServer.add(lesson);
             }
         }
 
 
         for (VertretungsLesson vertretungsLesson : lessonsServer) {
-            if(!lessonsLocal.contains(vertretungsLesson.getVertretungsID())) {
-
+            //System.out.println(vertretungsLesson.getReplacementId());
+            if(!lessonsLocalIds.contains(vertretungsLesson.getReplacementId())) {
                 if(!vertretungsLesson.getInfo().equals("Klausuraufsicht")){
-                    //System.out.println("removed: ".concat(vertretungsLesson.getInfo()));
-                    removedLessons.add(vertretungsLesson.getVertretungsID());
+                    //System.out.println("removed: ".concat(vertretungsLesson.getReplacementId()));
+                    removedLessonsIds.add(vertretungsLesson.getReplacementId());
                 }
             }else {
-                int pos = lessonsLocal.indexOf(vertretungsLesson.getVertretungsID());
+                int pos = lessonsLocalIds.indexOf(vertretungsLesson.getReplacementId());
                 VertretungsLesson localLesson = lessons.get(pos);
-                if(!(vertretungsLesson.getChangedRoom().equals(localLesson.getChangedRoom()) && vertretungsLesson.getChangedTeacher().equals(localLesson.getChangedTeacher()) && vertretungsLesson.getChangedSubject().equals(localLesson.getChangedSubject() ))){
-                    //System.out.println("updated: ".concat(vertretungsLesson.getVertretungsID()));
+                //System.out.println(gson.toJson(localLesson));
+                //System.out.println(gson.toJson(vertretungsLesson));
+                //TODO add validation of teacher
+                if(!(vertretungsLesson.getRoom().equals(localLesson.getRoom()) && vertretungsLesson.getInfo().equals(localLesson.getInfo()) && vertretungsLesson.getSubject().equals(localLesson.getSubject() ))){
+                    //System.out.println("updated: ".concat(vertretungsLesson.getReplacementId()));
                     updatedLessons.add(localLesson);
                 }
             }
         }
         ArrayList<VertretungsLesson> addedLessons = new ArrayList<>();
         for (VertretungsLesson lesson : lessons) {
-            if(!lessonsServerId.contains(lesson.getVertretungsID())){
-                //System.out.println("added: ".concat(lesson).concat(",").concat(String.valueOf(lessonsLocal.indexOf(lesson))));
+            if(!lessonsServerIds.contains(lesson.getReplacementId())){
+                //System.out.println("added: ".concat(lesson.getReplacementId()).concat(",pos: ").concat(String.valueOf(lessonsLocalIds.indexOf(lesson.getReplacementId()))));
                 addedLessons.add(lesson);
                 System.out.println(lesson.getVertretungsID());
             }
 
         }
 
-        logger.info("removed:".concat(gson.toJson(removedLessons)));
+        logger.info("removed:".concat(gson.toJson(removedLessonsIds)));
         logger.info("added:".concat(gson.toJson(addedLessons)));
         logger.info("updated:".concat(gson.toJson(updatedLessons)));
 
-        for (String lesson : removedLessons) {
-            api.deleteVertretung(lesson);
+
+        for (String lessonId : removedLessonsIds) {
+            api.deleteVertretung(lessonId);
         }
         /*
         for (VertretungsLesson lesson : updatedLessons) {
