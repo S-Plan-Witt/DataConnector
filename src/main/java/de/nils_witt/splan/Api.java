@@ -53,6 +53,7 @@ public class Api {
                 //bearer invalid
                 logger.log(Level.WARNING, "Bearer invalid");
             }
+            response.close();
         } catch (java.net.UnknownHostException e) {
             //URL invalid
             logger.log(Level.WARNING, "Host not found", e);
