@@ -101,14 +101,14 @@ public class Stundenplan {
 
                         if(lessonCourse.getTagName().substring(0,3).equals("tag")){
                             try {
-                                lessonModel.setSubject(lessonCourse.getElementsByTagName("fach").item(0).getTextContent());
-                                lessonModel.setLesson(lessonNumber);
+                                lessonModel.getCourse().setSubject(lessonCourse.getElementsByTagName("fach").item(0).getTextContent());
+                                lessonModel.setLessonNumber(lessonNumber);
                                 lessonModel.setDay(Integer.parseInt(lessonCourse.getTagName().substring(3)));
-                                lessonModel.setGrade(grade);
-                                lessonModel.setGroup(grade);
+                                lessonModel.getCourse().setGrade(grade);
+                                lessonModel.getCourse().setGroup(grade);
 
                                 if(lessonCourse.getElementsByTagName("gruppe").getLength() > 0){
-                                    lessonModel.setGroup(lessonCourse.getElementsByTagName("gruppe").item(0).getTextContent().substring(lessonModel.getSubject().length()).replaceAll("\\s",""));
+                                    lessonModel.getCourse().setGroup(lessonCourse.getElementsByTagName("gruppe").item(0).getTextContent().substring(lessonModel.getCourse().getSubject().length()).replaceAll("\\s",""));
                                 }
                                 if(lessonCourse.getElementsByTagName("lehrer").getLength() > 0){
                                     String teacher = lessonCourse.getElementsByTagName("lehrer").item(0).getTextContent().substring(0,3);
@@ -117,7 +117,7 @@ public class Stundenplan {
                                 if(lessonCourse.getElementsByTagName("raum").getLength() > 0){
                                     lessonModel.setRoom(lessonCourse.getElementsByTagName("raum").item(0).getTextContent());
                                 }
-                                if(!lessonModel.getSubject().equals("") && lessonModel.getTeacher() != null){
+                                if(!lessonModel.getCourse().getSubject().equals("") && lessonModel.getTeacher() != null){
                                     lessonArrayList.add(lessonModel);
                                 }
 
