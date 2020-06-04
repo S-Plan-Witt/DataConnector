@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan;
@@ -7,13 +7,12 @@ package de.nils_witt.splan;
 import com.google.gson.Gson;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Document;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,31 +41,15 @@ public class Main {
         Vertretungsplan vertretungsplan = new Vertretungsplan(logger, api);
         Stundenplan stundenplan = new Stundenplan(logger, api);
         Klausurplan klausurenplan = new Klausurplan(logger, api);
+        VertretungsplanUntis vertretungsplanUntis = new VertretungsplanUntis(logger, api);
 
-        CustomWatcher customWatcher = new CustomWatcher(vertretungsplan, stundenplan, klausurenplan, logger, config, path);
+        CustomWatcher customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, klausurenplan, logger, config, path);
 
         try {
             customWatcher.start();
         } catch (Exception e){
             e.printStackTrace();
         }
-
-
-        if(false){
-            try {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                //InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/splank.xml")));
-                InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/klausuren.xml")));
-                //InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/Vertretungsplan Lehrer.xml")));
-                Document document = builder.parse(in);
-                customWatcher.fileProccessor(document);
-
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-
     }
 
     /**

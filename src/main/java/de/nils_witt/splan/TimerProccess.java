@@ -1,26 +1,24 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan;
 
-import org.w3c.dom.Document;
 import java.util.TimerTask;
 
 public class TimerProccess extends TimerTask {
-    private Document document;
-    private CustomWatcher customWatcher;
+    private final String changed;
+    private final CustomWatcher customWatcher;
 
-    public TimerProccess(Document document, CustomWatcher customWatcher ) {
-        this.document = document;
+    public TimerProccess(String changed, CustomWatcher customWatcher) {
+        this.changed = changed;
         this.customWatcher = customWatcher;
 
     }
 
     @Override
-    public void run()
-    {
-        customWatcher.fileProccessor(document);
+    public void run() {
+        customWatcher.fileProccessor(changed);
     }
 
 }
