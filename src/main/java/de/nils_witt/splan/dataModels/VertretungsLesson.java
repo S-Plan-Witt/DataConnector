@@ -32,6 +32,19 @@ public class VertretungsLesson {
 
     }
 
+    public VertretungsLesson(VertretungsLesson lesson) {
+        this.date = lesson.date;
+        this.lessonNumber = lesson.lessonNumber;
+        this.course = lesson.course;
+        this.weekday = lesson.weekday;
+        this.subject = lesson.subject;
+        this.teacher = lesson.teacher;
+        this.room = lesson.room;
+        this.info = lesson.info;
+        this.replacementId = lesson.replacementId;
+        this.lessonId = lesson.lessonId;
+    }
+
     public String getDate() {
         return date;
     }
@@ -40,7 +53,6 @@ public class VertretungsLesson {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             formatter = formatter.withLocale(Locale.GERMAN);
-
 
 
             String[] parts = date.split("-");
@@ -57,11 +69,22 @@ public class VertretungsLesson {
                 this.weekday = localDate.getDayOfWeek().getValue();
                 System.out.println(localDate.getDayOfWeek().getValue());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
+    }
 
+    public void setDateUntis(String date) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            formatter = formatter.withLocale(Locale.GERMAN);
 
+            this.date = date;
+            LocalDate localDate = LocalDate.parse(this.date, formatter);
+            this.weekday = localDate.getDayOfWeek().getValue();
+        } catch (Exception e) {
+
+        }
     }
 
     public int getWeekday() {
