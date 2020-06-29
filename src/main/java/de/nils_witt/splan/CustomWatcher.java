@@ -28,11 +28,13 @@ public class CustomWatcher {
     private final String path;
     private final Timer timer;
     private VertretungsplanUntis vertretungsplanUntis;
+    private StundenplanUntis stundenplanUntis;
 
-    public CustomWatcher(Vertretungsplan vertretungsplan, VertretungsplanUntis vertretungsplanUntis, Stundenplan stundenplan, Klausurplan klausurplan, Logger logger, Config config, String path) {
+    public CustomWatcher(Vertretungsplan vertretungsplan, VertretungsplanUntis vertretungsplanUntis, Stundenplan stundenplan, StundenplanUntis stundenplanUntis, Klausurplan klausurplan, Logger logger, Config config, String path) {
         this.vertretungsplan = vertretungsplan;
         this.vertretungsplanUntis = vertretungsplanUntis;
         this.stundenplan = stundenplan;
+        this.stundenplanUntis = stundenplanUntis;
         this.klausurplan = klausurplan;
         this.logger = logger;
         this.config = config;
@@ -94,7 +96,6 @@ public class CustomWatcher {
                 }
 
                 switch (nodeName) {
-                    //vp = Vertretungsplan
                     case "vp":
                         logger.info("Vplan");
                         vertretungsplan.readDocument(document);
@@ -117,6 +118,9 @@ public class CustomWatcher {
                 logger.log(Level.INFO, "Excel: " + Paths.get(path.concat("/watchDir/").concat(changed)));
                 ArrayList<VertretungsLesson> vertretungsLessons = vertretungsplanUntis.readXslx(Paths.get(path.concat("/watchDir/").concat(changed)).toString());
                 vertretungsplanUntis.compareVplanLocalWithApi(vertretungsLessons);
+            } else if (changed.toLowerCase().endsWith(".txt")) {
+                logger.log(Level.INFO, "DIF: " + Paths.get(path.concat("/watchDir/").concat(changed)));
+                stundenplanUntis.readDocument(Paths.get(path.concat("/watchDir/").concat(changed)).toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
