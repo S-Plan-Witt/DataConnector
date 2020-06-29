@@ -42,8 +42,9 @@ public class Main {
         Stundenplan stundenplan = new Stundenplan(logger, api);
         Klausurplan klausurenplan = new Klausurplan(logger, api);
         VertretungsplanUntis vertretungsplanUntis = new VertretungsplanUntis(logger, api);
+        StundenplanUntis stundenplanUntis = new StundenplanUntis(logger, api);
 
-        CustomWatcher customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, klausurenplan, logger, config, path);
+        CustomWatcher customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, stundenplanUntis, klausurenplan, logger, config, path);
 
         try {
             customWatcher.start();
