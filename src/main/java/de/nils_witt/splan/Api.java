@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan;
@@ -7,7 +7,6 @@ package de.nils_witt.splan;
 import com.google.gson.Gson;
 import de.nils_witt.splan.dataModels.Klausur;
 import de.nils_witt.splan.dataModels.Lesson;
-import de.nils_witt.splan.dataModels.LessonRequest;
 import de.nils_witt.splan.dataModels.VertretungsLesson;
 import okhttp3.*;
 
@@ -17,11 +16,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Api {
-    private Logger logger;
-    private String backend;
+    private final Logger logger;
+    private final String backend;
     private String bearer;
-    private OkHttpClient client;
-    private Gson gson = new Gson();
+    private final OkHttpClient client;
+    private final Gson gson = new Gson();
     private final MediaType mediaType = MediaType.parse("application/json");
 
 
@@ -73,6 +72,7 @@ public class Api {
 
         try {
             Response response = client.newCall(request).execute();
+            assert response.body() != null;
             String json = response.body().string();
             response.close();
             return gson.fromJson(json, VertretungsLesson[].class);
@@ -112,11 +112,9 @@ public class Api {
         try {
             Response response = client.newCall(request).execute();
             response.close();
-            return;
         }catch (Exception e){
             e.printStackTrace();
         }
-        return;
     }
 
     public void addVertretungen(ArrayList<VertretungsLesson> vertretungen){
@@ -136,26 +134,6 @@ public class Api {
         }catch (Exception e){
             e.printStackTrace();
         }
-        return;
-    }
-
-    public void updateVertretungen(VertretungsLesson vertretung){
-
-        RequestBody body = RequestBody.create(mediaType, gson.toJson(vertretung));
-        Request request = new Request.Builder()
-                .url(backend.concat("/vertretungen/id/".concat(vertretung.getReplacementId())))
-                .put(body)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer ".concat(bearer))
-                .build();
-
-        try {
-            Response response = client.newCall(request).execute();
-            response.close();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return;
     }
 
     public void addLessons(ArrayList<Lesson> lessons){
@@ -175,50 +153,6 @@ public class Api {
         }catch (Exception e){
             e.printStackTrace();
         }
-        return;
-    }
-
-    public Lesson[] getLessonByTeacherDayLesson(LessonRequest lessonRequest){
-        RequestBody body = RequestBody.create(mediaType, gson.toJson(lessonRequest));
-
-        Request request = new Request.Builder()
-                .url(backend.concat("/timetable/find/course"))
-                .post(body)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer ".concat(bearer))
-                .build();
-
-        try {
-            Response response = client.newCall(request).execute();
-            assert response.body() != null;
-            String json = response.body().string();
-            response.close();
-            return gson.fromJson(json, Lesson[].class);
-        }catch (Exception e){
-            e.printStackTrace();
-            return null;
-        }
-
-
-    }
-
-    public VertretungsLesson[] getReplacementLessonById(String id){
-
-        Request request = new Request.Builder()
-                .url(backend.concat("/vertretungen/id/").concat(id))
-                .get()
-                .addHeader("Authorization", "Bearer ".concat(bearer))
-                .build();
-
-        try {
-            Response response = client.newCall(request).execute();
-            String json = response.body().string();
-            response.close();
-            return gson.fromJson(json, VertretungsLesson[].class);
-        }catch (Exception e){
-            e.printStackTrace();
-            return null;
-        }
     }
 
     public VertretungsLesson[] getReplacementLessonByFilter(String info){
@@ -232,6 +166,7 @@ public class Api {
                 .build();
         try {
             Response response = client.newCall(request).execute();
+            assert response.body() != null;
             String json = response.body().string();
             response.close();
             return gson.fromJson(json, VertretungsLesson[].class);
@@ -258,6 +193,5 @@ public class Api {
         }catch (Exception e){
             e.printStackTrace();
         }
-        return;
     }
 }

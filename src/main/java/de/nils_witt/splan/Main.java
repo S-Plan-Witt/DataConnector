@@ -22,7 +22,7 @@ public class Main {
     public static void main(String[] args) {
         //Init workspace and params
         String path;
-        Config configRead = null;
+        Config configRead;
         path = getJarPath();
 
         if (path == null) return;

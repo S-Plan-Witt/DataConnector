@@ -9,12 +9,10 @@ import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.ArrayList;
-import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,9 +24,8 @@ public class CustomWatcher {
     private final Config config;
     private final Path watchPath;
     private final String path;
-    private final Timer timer;
-    private VertretungsplanUntis vertretungsplanUntis;
-    private StundenplanUntis stundenplanUntis;
+    private final VertretungsplanUntis vertretungsplanUntis;
+    private final StundenplanUntis stundenplanUntis;
 
     public CustomWatcher(Vertretungsplan vertretungsplan, VertretungsplanUntis vertretungsplanUntis, Stundenplan stundenplan, StundenplanUntis stundenplanUntis, Klausurplan klausurplan, Logger logger, Config config, String path) {
         this.vertretungsplan = vertretungsplan;
@@ -41,22 +38,9 @@ public class CustomWatcher {
         this.watchPath = Paths.get(path.concat("/watchDir"));
         this.path = path;
 
-        timer = new Timer(true);
     }
 
-    public CustomWatcher(Vertretungsplan vertretungsplan, Stundenplan stundenplan, Klausurplan klausurplan, Logger logger, Config config, String path) {
-        this.vertretungsplan = vertretungsplan;
-        this.stundenplan = stundenplan;
-        this.klausurplan = klausurplan;
-        this.logger = logger;
-        this.config = config;
-        this.watchPath = Paths.get(path.concat("/watchDir"));
-        this.path = path;
-
-        timer = new Timer(true);
-    }
-
-    public void start() throws IOException, InterruptedException, ParserConfigurationException {
+    public void start() throws IOException, InterruptedException {
 
         Path watcherPath = Paths.get(this.path.concat("/watchDir"));
 
@@ -72,7 +56,10 @@ public class CustomWatcher {
             key = watchService.take();
             for (WatchEvent<?> event : key.pollEvents()) {
                 System.out.println(event.context());
-                fileProccessor(event.context().toString());
+                if(!event.context().toString().startsWith("~$")){
+                    fileProccessor(event.context().toString());
+                }
+
             }
             key.reset();
         }

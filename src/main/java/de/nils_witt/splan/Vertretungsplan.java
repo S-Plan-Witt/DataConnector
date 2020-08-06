@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan;
@@ -15,18 +15,17 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class Vertretungsplan {
-    private Utils utils = new Utils();
-    private List<VertretungsLesson> lessons = new ArrayList<>();
-    private List<Aufsicht> aufsichten = new ArrayList<>();
-    private Logger logger;
-    private Api api;
-    private Gson gson = new Gson();
+    private final Utils utils = new Utils();
+    private final List<VertretungsLesson> lessons = new ArrayList<>();
+    private final List<Aufsicht> aufsichten = new ArrayList<>();
+    private final Logger logger;
+    private final Api api;
+    private final Gson gson = new Gson();
 
     public Vertretungsplan(Logger logger, Api api) {
         this.logger = logger;

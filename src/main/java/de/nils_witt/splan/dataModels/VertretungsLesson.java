@@ -7,6 +7,8 @@ package de.nils_witt.splan.dataModels;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class VertretungsLesson {
     private String date;
@@ -19,10 +21,6 @@ public class VertretungsLesson {
     private String info;
     private String replacementId;
     private int lessonId;
-
-    public int getLessonId() {
-        return lessonId;
-    }
 
     public void setLessonId(int lessonId) {
         this.lessonId = lessonId;
@@ -56,7 +54,7 @@ public class VertretungsLesson {
 
 
             String[] parts = date.split("-");
-            if(parts.length == 3){
+            if(parts.length > 3){
                 if (parts[1].length() < 2){
                     parts[1] = "0".concat(parts[1]);
                 }
@@ -70,7 +68,7 @@ public class VertretungsLesson {
                 System.out.println(localDate.getDayOfWeek().getValue());
             }
         } catch (Exception e) {
-
+            Logger.getGlobal().log(Level.WARNING,e.toString());
         }
     }
 
@@ -83,16 +81,12 @@ public class VertretungsLesson {
             LocalDate localDate = LocalDate.parse(this.date, formatter);
             this.weekday = localDate.getDayOfWeek().getValue();
         } catch (Exception e) {
-
+            Logger.getGlobal().log(Level.WARNING,e.toString());
         }
     }
 
     public int getWeekday() {
         return weekday;
-    }
-
-    public void setWeekday(int weekday) {
-        this.weekday = weekday;
     }
 
     public int getLessonNumber() {
@@ -119,10 +113,6 @@ public class VertretungsLesson {
         this.subject = subject;
     }
 
-    public String getTeacher() {
-        return teacher;
-    }
-
     public void setTeacher(String teacher) {
         this.teacher = teacher;
     }
@@ -145,10 +135,6 @@ public class VertretungsLesson {
 
     public String getReplacementId() {
         return replacementId;
-    }
-
-    public void setReplacementId(String replacementId) {
-        this.replacementId = replacementId;
     }
 
     public void genReplacementId() {

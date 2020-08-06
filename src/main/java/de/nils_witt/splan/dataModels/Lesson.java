@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan.dataModels;
@@ -34,10 +34,6 @@ public class Lesson {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public String getRoom() {
-        return room;
     }
 
     public void setRoom(String room) {

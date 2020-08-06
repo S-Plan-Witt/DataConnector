@@ -48,17 +48,14 @@ public class VertretungsplanUntis {
         lessonAP.setDay(5);
         lessonAP.setId(387);
 
-        //Lesson[] lessonsApi = new Lesson[]{lessonAP};
         Lesson[] lessonsApi = api.getLessons();
         if (lessonsApi.length > 0) {
             System.out.println(gson.toJson(lessonsApi[0]));
         }
 
-        //fileLocation = "/Users/nilswitt/SynologyDrive/Splan/S-Plan-DataConnector/out/artifacts/S_Plan_DataConnector_jar/watchDir/Untis.xlsx";
         Logger logger = Logger.getLogger("TextLogger");
         logger.info("Starting XSLX read");
         Iterator rows;
-        Iterator cells;
         InputStream excelFileToRead;
         XSSFWorkbook wb;
         XSSFSheet sheet;
@@ -85,11 +82,8 @@ public class VertretungsplanUntis {
             row = (XSSFRow) rows.next();
             cell = row.getCell(0);
             if (cell != null && cell.getCellType() == CellType.NUMERIC) {
-                int eventId = (int) cell.getNumericCellValue();
                 String eventType = row.getCell(1).getStringCellValue();
-                if (eventType.equals("Pausenaufsicht")) {
-
-                } else {
+                if (!eventType.equals("Pausenaufsicht"))  {
                     try {
 
                         String[] lessonNumbers = new String[]{};
@@ -169,8 +163,8 @@ public class VertretungsplanUntis {
                             lesson.genReplacementId();
                             lessons.add(lesson);
                         } else {
-                            for (int i = 0; i < lessonNumbers.length; i++) {
-                                int lessonNum = Integer.parseInt(lessonNumbers[i]);
+                            for (String lessonNumber : lessonNumbers) {
+                                int lessonNum = Integer.parseInt(lessonNumber);
                                 System.out.println(lessonNum);
                                 lesson.setLessonNumber(lessonNum);
                                 for (Lesson apiLesson : lessonsApi) {
@@ -196,13 +190,9 @@ public class VertretungsplanUntis {
                         e.printStackTrace();
                     }
                     System.out.println("---------------");
-
                 }
-
-
             }
         }
-
         return lessons;
     }
 
@@ -272,13 +262,11 @@ public class VertretungsplanUntis {
         logger.info("added:".concat(gson.toJson(addedLessons)));
         logger.info("updated:".concat(gson.toJson(updatedLessons)));
 
-
         for (String lessonId : removedLessonsIds) {
             api.deleteVertretung(lessonId);
         }
 
         api.addVertretungen(addedLessons);
         api.addVertretungen(updatedLessons);
-
     }
 }

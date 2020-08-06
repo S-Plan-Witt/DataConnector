@@ -4,7 +4,6 @@
 
 package de.nils_witt.splan;
 
-import com.google.gson.Gson;
 import de.nils_witt.splan.dataModels.Course;
 import de.nils_witt.splan.dataModels.Lesson;
 
@@ -17,14 +16,13 @@ import java.util.logging.Logger;
 public class StundenplanUntis {
     private final Logger logger;
     private final Api api;
-    private final Gson gson = new Gson();
 
     public StundenplanUntis(Logger logger, Api api) {
         this.logger = logger;
         this.api = api;
     }
 
-    public ArrayList<Lesson> readDocument(String document) {
+    public void readDocument(String document) {
         BufferedReader reader;
         ArrayList<Lesson> lessons = new ArrayList<>();
         try {
@@ -32,10 +30,8 @@ public class StundenplanUntis {
             String line = reader.readLine();
             while (line != null) {
                 Lesson lesson = new Lesson();
-                //System.out.println(line);
 
                 String[] lessonParts = line.split(";");
-                int id = Integer.parseInt(lessonParts[0]);
                 String className = lessonParts[1].replaceAll("\"", "");
                 String teacher = lessonParts[2].replaceAll("\"", "");
                 String group = lessonParts[3].replaceAll("\"", "");
@@ -70,6 +66,5 @@ public class StundenplanUntis {
             e.printStackTrace();
         }
         api.addLessons(lessons);
-        return lessons;
     }
 }

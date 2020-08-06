@@ -1,10 +1,9 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan;
 
-import com.google.gson.Gson;
 import de.nils_witt.splan.dataModels.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -17,13 +16,12 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 public class Klausurplan {
-    private Api api;
-    private Logger logger;
-    private Gson gson = new Gson();
-    ArrayList<VertretungsLesson> vertretungsLessons = new ArrayList<>();
-    ArrayList<String> replacementLessonIds = new ArrayList<>();
-    ArrayList<String> lessonsOnServer = new ArrayList<>();
-    ArrayList<Klausur> exams = new ArrayList<>();
+    private final Api api;
+    private final Logger logger;
+    private ArrayList<VertretungsLesson> vertretungsLessons = new ArrayList<>();
+    private ArrayList<String> replacementLessonIds = new ArrayList<>();
+    private final ArrayList<String> lessonsOnServer = new ArrayList<>();
+    private final ArrayList<Klausur> exams = new ArrayList<>();
 
     public Klausurplan(Logger logger, Api api) {
         this.logger = logger;
@@ -41,7 +39,6 @@ public class Klausurplan {
         for (VertretungsLesson vLesson : api.getReplacementLessonByFilter("Klausuraufsicht")) {
             lessonsOnServer.add(vLesson.getReplacementId());
         }
-        //System.out.println(gson.toJson(lessonsOnServer));
         try {
             //Laden der base node Unterelemente
             NodeList nl = document.getLastChild().getChildNodes();
@@ -57,15 +54,14 @@ public class Klausurplan {
 
                         String datum = el.getElementsByTagName("datum").item(0).getTextContent();
                         long dateInt = (long) (Integer.parseInt(datum) - 25569) * 86400000;
-                        LocalDate date = new Timestamp(dateInt).toLocalDateTime().toLocalDate();;
+                        LocalDate date = new Timestamp(dateInt).toLocalDateTime().toLocalDate();
                         klausur.setDate(date.toString());
 
                         String stufe = el.getElementsByTagName("stufe").item(0).getTextContent();
                         klausur.setGrade(stufe);
                         String room = el.getElementsByTagName("raum").item(0).getTextContent();
                         klausur.setRoom(room);
-                        String teacher = null;
-                        teacher = el.getElementsByTagName("lehrer").item(0).getTextContent();
+                        String teacher = el.getElementsByTagName("lehrer").item(0).getTextContent();
                         String[] parts = teacher.split(" ");
                         if(parts.length == 2){
                             klausur.setTeacher(parts[0]);
@@ -74,7 +70,6 @@ public class Klausurplan {
                             }catch (Exception e){
                                 klausur.setStudents(1);
                             }
-
                         }
 
                         String kurs = el.getElementsByTagName("kurs").item(0).getTextContent();
@@ -117,9 +112,7 @@ public class Klausurplan {
                         } catch (Exception e){
                             e.printStackTrace();
                         }
-                        //createKLVert(el);
                     } catch (Exception e){
-                        //e.printStackTrace();
                         System.out.println("Error reading Element");
                     }
                 }
@@ -128,89 +121,7 @@ public class Klausurplan {
             e.printStackTrace();
         }
 
-        //System.out.println(gson.toJson(vertretungsLessons));
         api.addVertretungen(vertretungsLessons);
-        //System.out.println(gson.toJson(lessonsOnServer));
-    }
-
-
-    private void createKLVert(Element el){
-        NodeList childs = el.getChildNodes();
-
-        for (int i = 0; i < childs.getLength(); i++) {
-
-            if(childs.item(i).getNodeType() == Node.ELEMENT_NODE){
-                Element element = (Element) childs.item(i);
-
-                if(!(element.getTextContent().equals("") || element.getTextContent().equals("/"))){
-                    Integer lesson = 0;
-                    switch (element.getTagName()){
-                        case "eins":
-                            lesson = 1;
-                            break;
-                        case "zwei":
-                            lesson = 2;
-                            break;
-                        case "drei":
-                            lesson = 3;
-                            break;
-                        case "vier":
-                            lesson = 4;
-                            break;
-                        case "fünf":
-                            lesson = 5;
-                            break;
-                        case "sechs":
-                            lesson = 6;
-                            break;
-                        case "sieben":
-                            lesson = 7;
-                            break;
-                        default:
-                            //System.out.println(element.getTagName());
-                    }
-                    if(lesson != 0){
-                        String datum = el.getElementsByTagName("datum").item(0).getTextContent();
-                        long dateInt = (long) (Integer.parseInt(datum) - 25569) * 86400000;
-                        LocalDate date = new Timestamp(dateInt).toLocalDateTime().toLocalDate();
-                        LessonRequest lessonRequest = new LessonRequest();
-                        lessonRequest.setLesson(String.valueOf(lesson));
-                        lessonRequest.setTeacher(element.getTextContent());
-                        lessonRequest.setWeekday(String.valueOf(date.getDayOfWeek().getValue()));
-
-                        Lesson[] lessons = api.getLessonByTeacherDayLesson(lessonRequest);
-                        if(lessons.length > 0){
-                            try {
-                                VertretungsLesson vertretungsLesson = new VertretungsLesson();
-                                vertretungsLesson.setTeacher("---");
-                                vertretungsLesson.setRoom("---");
-                                vertretungsLesson.setSubject("---");
-                                vertretungsLesson.setDate(date.toString());
-                                vertretungsLesson.getCourse().setGrade(lessons[0].getCourse().getGrade());
-                                vertretungsLesson.getCourse().setGroup(lessons[0].getCourse().getGroup());
-                                vertretungsLesson.setLessonNumber(lessons[0].getLessonNumber());
-                                vertretungsLesson.getCourse().setSubject(lessons[0].getCourse().getSubject());
-                                vertretungsLesson.setInfo("Klausuraufsicht");
-                                if(!replacementLessonIds.contains(vertretungsLesson.getReplacementId())){
-                                    replacementLessonIds.add(vertretungsLesson.getReplacementId());
-
-                                    VertretungsLesson[] matchingReplacementLessons = api.getReplacementLessonById(vertretungsLesson.getReplacementId());
-                                    if(matchingReplacementLessons.length == 0){
-                                        vertretungsLessons.add(vertretungsLesson);
-                                    }
-                                    if(lessonsOnServer.contains(vertretungsLesson.getReplacementId())){
-                                        lessonsOnServer.remove(vertretungsLesson.getReplacementId());
-                                    }
-                                }
-                            }catch (Exception e){
-                                e.printStackTrace();
-                            }
-                        }
-
-                    }
-                }
-            }
-        }
     }
 
     public void pushExams(){
