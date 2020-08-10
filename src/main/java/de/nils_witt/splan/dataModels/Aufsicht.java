@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan.dataModels;
@@ -14,24 +14,12 @@ public class Aufsicht {
 
     }
 
-    public String getTime() {
-        return time;
-    }
-
     public void setTime(String time) {
         this.time = time;
     }
 
-    public String getTeacher() {
-        return teacher;
-    }
-
     public void setTeacher(String teacher) {
         this.teacher = teacher;
-    }
-
-    public String getLocation() {
-        return location;
     }
 
     public void setLocation(String location) {

@@ -1,42 +1,23 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan.dataModels;
 
 public class Lesson {
-    private String subject;
-    private String grade;
-    private String group;
-    private String teacher;
+    private Course course;
     private String room;
-    private int lesson;
+    private int lessonNumber;
     private int day;
-    //Lesson
+    private int id;
+    private String teacher;
 
-    public String getSubject() {
-        return subject;
-
+    public int getId() {
+        return id;
     }
 
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getGrade() {
-        return grade;
-    }
-
-    public void setGrade(String grade) {
-        this.grade = grade;
-    }
-
-    public String getGroup() {
-        return group;
-    }
-
-    public void setGroup(String group) {
-        this.group = group;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTeacher() {
@@ -47,20 +28,24 @@ public class Lesson {
         this.teacher = teacher;
     }
 
-    public String getRoom() {
-        return room;
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
     }
 
     public void setRoom(String room) {
         this.room = room;
     }
 
-    public int getLesson() {
-        return lesson;
+    public int getLessonNumber() {
+        return lessonNumber;
     }
 
-    public void setLesson(int lesson) {
-        this.lesson = lesson;
+    public void setLessonNumber(int lessonNumber) {
+        this.lessonNumber = lessonNumber;
     }
 
     public int getDay() {

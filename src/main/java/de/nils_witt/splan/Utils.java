@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Utils {
-    private List<String> months = new ArrayList<String>();
+    private final List<String> months = new ArrayList<>();
 
     public Utils() {
         months.add("Januar");

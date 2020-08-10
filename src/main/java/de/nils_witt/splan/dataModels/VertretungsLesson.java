@@ -1,25 +1,46 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan.dataModels;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class VertretungsLesson {
     private String date;
-    private String lesson;
+    private int lessonNumber;
+    private Course course;
+    private int weekday;
     private String subject;
-    private String changedSubject;
-    private String changedTeacher;
-    private String changedRoom;
+    private String teacher;
+    private String room;
     private String info;
-    private String grade;
-    private String group;
-    private String vertretungsID;
+    private String replacementId;
+    private int lessonId;
+
+    public void setLessonId(int lessonId) {
+        this.lessonId = lessonId;
+    }
 
     public VertretungsLesson() {
 
+    }
+
+    public VertretungsLesson(VertretungsLesson lesson) {
+        this.date = lesson.date;
+        this.lessonNumber = lesson.lessonNumber;
+        this.course = lesson.course;
+        this.weekday = lesson.weekday;
+        this.subject = lesson.subject;
+        this.teacher = lesson.teacher;
+        this.room = lesson.room;
+        this.info = lesson.info;
+        this.replacementId = lesson.replacementId;
+        this.lessonId = lesson.lessonId;
     }
 
     public String getDate() {
@@ -28,8 +49,12 @@ public class VertretungsLesson {
 
     public void setDate(String date) {
         try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            formatter = formatter.withLocale(Locale.GERMAN);
+
+
             String[] parts = date.split("-");
-            if(parts.length == 3){
+            if(parts.length > 3){
                 if (parts[1].length() < 2){
                     parts[1] = "0".concat(parts[1]);
                 }
@@ -38,20 +63,46 @@ public class VertretungsLesson {
                 }
 
                 this.date = parts[0].concat("-").concat(parts[1]).concat("-").concat(parts[2]);
+                LocalDate localDate = LocalDate.parse(this.date, formatter);
+                this.weekday = localDate.getDayOfWeek().getValue();
+                System.out.println(localDate.getDayOfWeek().getValue());
             }
-        }catch (Exception e){
-
+        } catch (Exception e) {
+            Logger.getGlobal().log(Level.WARNING,e.toString());
         }
-
-
     }
 
-    public String getLesson() {
-        return lesson;
+    public void setDateUntis(String date) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            formatter = formatter.withLocale(Locale.GERMAN);
+
+            this.date = date;
+            LocalDate localDate = LocalDate.parse(this.date, formatter);
+            this.weekday = localDate.getDayOfWeek().getValue();
+        } catch (Exception e) {
+            Logger.getGlobal().log(Level.WARNING,e.toString());
+        }
     }
 
-    public void setLesson(String lesson) {
-        this.lesson = lesson;
+    public int getWeekday() {
+        return weekday;
+    }
+
+    public int getLessonNumber() {
+        return lessonNumber;
+    }
+
+    public void setLessonNumber(int lessonNumber) {
+        this.lessonNumber = lessonNumber;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
     }
 
     public String getSubject() {
@@ -62,29 +113,16 @@ public class VertretungsLesson {
         this.subject = subject;
     }
 
-
-    public String getChangedSubject() {
-        return changedSubject;
+    public void setTeacher(String teacher) {
+        this.teacher = teacher;
     }
 
-    public void setChangedSubject(String changedSubject) {
-        this.changedSubject = changedSubject;
+    public String getRoom() {
+        return room;
     }
 
-    public String getChangedTeacher() {
-        return changedTeacher;
-    }
-
-    public void setChangedTeacher(String changedTeacher) {
-        this.changedTeacher = changedTeacher;
-    }
-
-    public String getChangedRoom() {
-        return changedRoom;
-    }
-
-    public void setChangedRoom(String changedRoom) {
-        this.changedRoom = changedRoom;
+    public void setRoom(String room) {
+        this.room = room;
     }
 
     public String getInfo() {
@@ -95,32 +133,11 @@ public class VertretungsLesson {
         this.info = info;
     }
 
-    public String getGrade() {
-        return grade;
+    public String getReplacementId() {
+        return replacementId;
     }
 
-    public void setGrade(String grade) {
-        this.grade = grade;
-    }
-
-    public String getGroup() {
-        return group;
-    }
-
-    public void setGroup(String group) {
-        this.group = group;
-    }
-
-    public String getVertretungsID() {
-        return vertretungsID;
-    }
-
-    public void setVertretungsID(String vertretungsID) {
-        this.vertretungsID = vertretungsID;
-    }
-
-    public void genVertretungsID(){
-        LocalDate date = LocalDate.parse(getDate());
-        vertretungsID = getGrade().concat("-").concat(getSubject()).concat("-").concat(getGroup()).concat("-").concat(getLesson()).concat("-").concat(String.valueOf(date.getDayOfWeek().getValue())).concat("-").concat(getDate());
+    public void genReplacementId() {
+        this.replacementId = this.date + "-" + this.lessonId;
     }
 }

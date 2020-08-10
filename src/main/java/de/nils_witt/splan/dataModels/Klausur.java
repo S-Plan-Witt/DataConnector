@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019. Nils Witt
+ * Copyright (c) 2020. Nils Witt
  */
 
 package de.nils_witt.splan.dataModels;
@@ -55,45 +55,5 @@ public class Klausur {
 
     public void setDisplay(int display) {
         this.display = display;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public String getFrom() {
-        return from;
-    }
-
-    public String getTo() {
-        return to;
-    }
-
-    public String getGrade() {
-        return grade;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public String getGroup() {
-        return group;
-    }
-
-    public String getTeacher() {
-        return teacher;
-    }
-
-    public Integer getStudents() {
-        return students;
-    }
-
-    public String getRoom() {
-        return room;
-    }
-
-    public int getDisplay() {
-        return display;
     }
 }
