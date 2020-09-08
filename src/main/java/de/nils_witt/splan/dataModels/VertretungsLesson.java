@@ -22,6 +22,10 @@ public class VertretungsLesson {
     private String replacementId;
     private int lessonId;
 
+    public int getLessonId() {
+        return lessonId;
+    }
+
     public void setLessonId(int lessonId) {
         this.lessonId = lessonId;
     }

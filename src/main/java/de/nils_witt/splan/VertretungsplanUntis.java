@@ -38,20 +38,7 @@ public class VertretungsplanUntis {
     }
 
     public ArrayList<VertretungsLesson> readXslx(String fileLocation) throws IOException {
-        Lesson lessonAP = new Lesson();
-        lessonAP.setCourse(new Course());
-        lessonAP.getCourse().setGroup("L2");
-        lessonAP.getCourse().setGrade("Q1");
-        lessonAP.getCourse().setSubject("M");
-        lessonAP.setRoom("N2.8");
-        lessonAP.setLessonNumber(3);
-        lessonAP.setDay(5);
-        lessonAP.setId(387);
-
         Lesson[] lessonsApi = api.getLessons();
-        if (lessonsApi.length > 0) {
-            System.out.println(gson.toJson(lessonsApi[0]));
-        }
 
         Logger logger = Logger.getLogger("TextLogger");
         logger.info("Starting XSLX read");
@@ -77,7 +64,7 @@ public class VertretungsplanUntis {
         logger.info("opening Sheet");
         sheet = wb.getSheetAt(0);
         rows = sheet.rowIterator();
-
+        lessons.clear();
         while (rows.hasNext()) {
             row = (XSSFRow) rows.next();
             cell = row.getCell(0);
@@ -95,9 +82,17 @@ public class VertretungsplanUntis {
 
                         String date = formatDate(row.getCell(2).getStringCellValue());
                         String[] teachers = row.getCell(5).getStringCellValue().replaceAll("</s>", "").replaceAll("<s>", "").split("→");
-                        String[] rooms = row.getCell(6).getStringCellValue().replaceAll("</s>", "").replaceAll("<s>", "").split("→");
+                        String[] rooms = new String[2];
+                        try {
+                            rooms = row.getCell(6).getStringCellValue().replaceAll("</s>", "").replaceAll("<s>", "").split("→");
+                        } catch (Exception e) {
+
+                            e.printStackTrace();
+                        }
                         String[] subjectGroup = row.getCell(7).getStringCellValue().replaceAll("</s>", "").replaceAll("<s>", "").split("-");
-                        String grade = row.getCell(4).getStringCellValue();
+                        if (subjectGroup.length == 1)
+                            subjectGroup = row.getCell(7).getStringCellValue().replaceAll("</s>", "").replaceAll("<s>", "").split(" ");
+                        String grade = row.getCell(4).getStringCellValue().replaceAll("</s>", "").replaceAll("<s>", "");
 
                         VertretungsLesson lesson = new VertretungsLesson();
 
@@ -126,8 +121,13 @@ public class VertretungsplanUntis {
                         Course course = new Course();
                         course.setSubject(subjectGroup[0]);
                         course.setGrade(grade);
-                        String group = subjectGroup[1];
+                        String group = "";
 
+                        if (subjectGroup.length > 1) {
+                            group = subjectGroup[1];
+                        } else {
+                            System.out.println(gson.toJson(subjectGroup));
+                        }
 
                         if (group.startsWith("GK")) {
                             group = group.substring(2);
@@ -140,60 +140,52 @@ public class VertretungsplanUntis {
                         if (lesson.getCourse().getSubject().equals("EK")) {
                             lesson.getCourse().setSubject("GO");
                         }
+                        lesson.getCourse().setGroup(lesson.getCourse().getGroup().replace("G", ""));
 
                         lesson.setDateUntis(date);
 
                         if (lessonNumbers.length == 1) {
                             lesson.setLessonNumber(Integer.parseInt(lessonNumbers[0]));
-                            for (Lesson apiLesson : lessonsApi) {
-                                if (lesson.getCourse().getGrade().equals(apiLesson.getCourse().getGrade())) {
-                                    if (lesson.getCourse().getSubject().equals(apiLesson.getCourse().getSubject())) {
-                                        if (lesson.getCourse().getGroup().equals(apiLesson.getCourse().getGroup())) {
-                                            if (lesson.getLessonNumber() == apiLesson.getLessonNumber()) {
-                                                if (lesson.getWeekday() == apiLesson.getDay()) {
-                                                    System.out.println("Found(FIN):" + apiLesson.getId());
-                                                    lesson.setLessonId(apiLesson.getId());
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                            compareLessons(lessonsApi, lesson);
+                            if (lesson.getLessonId() == 0) {
+                                System.out.println("No lesson Found; for: " + gson.toJson(lesson));
                             }
                             lesson.genReplacementId();
-                            lessons.add(lesson);
+                            if (lesson.getLessonId() != 0) lessons.add(new VertretungsLesson(lesson));
                         } else {
                             for (String lessonNumber : lessonNumbers) {
                                 int lessonNum = Integer.parseInt(lessonNumber);
-                                System.out.println(lessonNum);
                                 lesson.setLessonNumber(lessonNum);
-                                for (Lesson apiLesson : lessonsApi) {
-                                    if (lesson.getCourse().getGrade().equals(apiLesson.getCourse().getGrade())) {
-                                        if (lesson.getCourse().getSubject().equals(apiLesson.getCourse().getSubject())) {
-                                            if (lesson.getCourse().getGroup().equals(apiLesson.getCourse().getGroup())) {
-                                                if (lesson.getLessonNumber() == apiLesson.getLessonNumber()) {
-                                                    if (lesson.getWeekday() == apiLesson.getDay()) {
-                                                        System.out.println("Found(FIN):" + apiLesson.getId());
-                                                        lesson.setLessonId(apiLesson.getId());
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                                compareLessons(lessonsApi, lesson);
                                 lesson.genReplacementId();
-                                lessons.add(new VertretungsLesson(lesson));
+                                if (lesson.getLessonId() != 0) lessons.add(new VertretungsLesson(lesson));
                             }
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    System.out.println("---------------");
                 }
             }
         }
         return lessons;
+    }
+
+    private void compareLessons(Lesson[] lessonsApi, VertretungsLesson lesson) {
+        for (Lesson apiLesson : lessonsApi) {
+            if (lesson.getCourse().getGrade().equals(apiLesson.getCourse().getGrade())) {
+                if (lesson.getCourse().getSubject().equals(apiLesson.getCourse().getSubject())) {
+                    if (lesson.getCourse().getGroup().equals(apiLesson.getCourse().getGroup())) {
+                        if (lesson.getLessonNumber() == apiLesson.getLessonNumber()) {
+                            if (lesson.getWeekday() == apiLesson.getDay()) {
+                                System.out.println("Found(FIN):" + apiLesson.getId());
+                                lesson.setLessonId(apiLesson.getId());
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
