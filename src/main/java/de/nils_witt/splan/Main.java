@@ -10,9 +10,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
+import java.net.JarURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.jar.JarFile;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,7 +33,15 @@ public class Main {
         Logger logger = initLogger(path);
         if (logger == null) return;
         configRead = loadConfig(logger, path);
-        if (configRead == null) return;
+        if (configRead == null) {
+            try {
+                copyDefaultConfig();
+                System.out.println("Created default config.json");
+            } catch (Exception e) {
+                System.out.println("Failed to create default config.json");
+            }
+            return;
+        }
         final Config config = configRead;
         initWatchDir(path);
 
@@ -142,6 +154,43 @@ public class Main {
         }
         //Wenn die Konfig erfolgreich geladen und validiert wurde, wird diese zurückgegeben, sonst wir null.
         return config;
+    }
+
+    /**
+     * creates a new config.json in the working directory
+     *
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    private static void copyDefaultConfig() throws IOException, URISyntaxException {
+        InputStream in;
+        JarURLConnection conn;
+        JarFile jarfile;
+        URL url;
+        BufferedReader inputFileReader;
+        File outputFileLocation;
+        BufferedWriter outStream;
+        String line;
+
+        outputFileLocation = new File(getJarPath() + "/config.json");
+
+        url = new URL("jar:file:" + new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath() + "!/");
+
+        conn = (JarURLConnection) url.openConnection();
+        jarfile = conn.getJarFile();
+
+        in = jarfile.getInputStream(jarfile.getEntry("files/config.json"));
+
+        inputFileReader = new BufferedReader(new InputStreamReader(in));
+
+        outStream = new BufferedWriter(new FileWriter(outputFileLocation));
+
+        while ((line = inputFileReader.readLine()) != null) {
+            outStream.write(line);
+            outStream.newLine();
+        }
+        outStream.close();
+        in.close();
     }
 
     /**
