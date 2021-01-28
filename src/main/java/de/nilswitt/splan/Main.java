@@ -26,8 +26,36 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-public class Main {
+public class Main extends Application {
+
+    /**
+     * JavaFX stageStart
+     * @param primaryStage
+     * @throws Exception
+     */
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        Logger logger = Logger.getLogger("Logger");
+
+        TextArea textArea = new TextArea();
+        textArea.setEditable(false);
+        GuiLoggingHandler guiLoggingHandler = new GuiLoggingHandler(textArea);
+
+        primaryStage.setScene(new Scene(textArea, 500, 500));
+        primaryStage.setTitle("Console");
+        primaryStage.show();
+
+        logger.addHandler(guiLoggingHandler);
+        logger.info("Gui Init");
+
+        initApplication();
+    }
+
     public static void main(String[] args) {
+        launch();
+    }
+
+    public void initApplication(){
         //Init workspace and params
         String path;
         Config configRead;
@@ -42,7 +70,7 @@ public class Main {
                 copyDefaultConfig();
                 System.out.println("Created default config.json");
             } catch (Exception e) {
-                System.out.println("Failed to create default config.json");
+                logger.log(Level.WARNING, "Failed to create default config: ", e);
             }
             return;
         }
@@ -98,7 +126,7 @@ public class Main {
      */
     @Nullable
     private static Logger initLogger(String path) {
-        Logger logger = Logger.getLogger("TextLogger");
+        Logger logger = Logger.getLogger("Logger");
         FileHandler fh;
 
         try {
@@ -201,7 +229,7 @@ public class Main {
      * Anzeigen einer Traynotification in Windows oder eines Fensters in macOS
      *
      * @param title   Title of the message(short)
-     * @param message the message, longer desctipion or message body
+     * @param message the message, longer description or message body
      */
     static void displayTrayNotification(String title, String message) {
         try {
