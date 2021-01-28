@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2020. Nils Witt
+ * Copyright (c) 2021. Nils Witt
  */
 
-package de.nils_witt.splan;
+package de.nilswitt.splan;
 
 import com.google.gson.Gson;
-import de.nils_witt.splan.dataModels.Klausur;
-import de.nils_witt.splan.dataModels.Lesson;
-import de.nils_witt.splan.dataModels.VertretungsLesson;
+import de.nilswitt.splan.dataModels.Klausur;
+import de.nilswitt.splan.dataModels.Lesson;
+import de.nilswitt.splan.dataModels.VertretungsLesson;
 import okhttp3.*;
 
 import java.util.ArrayList;
@@ -55,9 +55,8 @@ public class Api {
             response.close();
         } catch (java.net.UnknownHostException e) {
             //URL invalid
-            logger.log(Level.WARNING, "Host not found", e);
+            logger.log(Level.WARNING, "API-Host not found");
         } catch (Exception e) {
-
             logger.log(Level.WARNING, "Exception while verifying Bearer", e);
         }
 

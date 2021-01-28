@@ -37,6 +37,13 @@
             <artifactId>annotations</artifactId>
             <version>17.0.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.akathist.maven.plugins.launch4j/launch4j-maven-plugin -->
+        <dependency>
+            <groupId>com.akathist.maven.plugins.launch4j</groupId>
+            <artifactId>launch4j-maven-plugin</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+
     </dependencies>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -53,7 +60,7 @@
                     <appendAssemblyId>true</appendAssemblyId>
                     <archive>
                         <manifest>
-                            <mainClass>de.nils_witt.splan.Main</mainClass>
+                            <mainClass>de.nilswitt.splan.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

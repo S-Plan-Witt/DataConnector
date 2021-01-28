@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2020. Nils Witt
+ * Copyright (c) 2021. Nils Witt
  */
 
-package de.nils_witt.splan;
+package de.nilswitt.splan;
 
 import java.util.ArrayList;
 import java.util.List;

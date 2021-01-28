@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2020. Nils Witt
+ * Copyright (c) 2021. Nils Witt
  */
 
-package de.nils_witt.splan;
+package de.nilswitt.splan;
 
 import com.google.gson.Gson;
-import de.nils_witt.splan.dataModels.Course;
-import de.nils_witt.splan.dataModels.Lesson;
-import de.nils_witt.splan.dataModels.VertretungsLesson;
+import de.nilswitt.splan.dataModels.Course;
+import de.nilswitt.splan.dataModels.Lesson;
+import de.nilswitt.splan.dataModels.VertretungsLesson;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;

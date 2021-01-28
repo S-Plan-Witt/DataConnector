@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2020. Nils Witt
+ * Copyright (c) 2021. Nils Witt
  */
 
-package de.nils_witt.splan;
+package de.nilswitt.splan;
 
 import com.google.gson.Gson;
-import de.nils_witt.splan.dataModels.Course;
-import de.nils_witt.splan.dataModels.Lesson;
+import de.nilswitt.splan.dataModels.Course;
+import de.nilswitt.splan.dataModels.Lesson;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

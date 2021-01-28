@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2020. Nils Witt
+ * Copyright (c) 2021. Nils Witt
  */
 
-package de.nils_witt.splan;
+package de.nilswitt.splan;
 
-import de.nils_witt.splan.dataModels.VertretungsLesson;
+import de.nilswitt.splan.dataModels.VertretungsLesson;
 import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilder;

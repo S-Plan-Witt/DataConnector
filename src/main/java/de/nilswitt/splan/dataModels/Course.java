@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2020. Nils Witt
+ * Copyright (c) 2021. Nils Witt
  */
 
-package de.nils_witt.splan.dataModels;
+package de.nilswitt.splan.dataModels;
 
 public class Course {
     private String grade;

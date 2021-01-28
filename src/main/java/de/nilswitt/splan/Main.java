@@ -1,10 +1,14 @@
 /*
- * Copyright (c) 2020. Nils Witt
+ * Copyright (c) 2021. Nils Witt
  */
 
-package de.nils_witt.splan;
+package de.nilswitt.splan;
 
 import com.google.gson.Gson;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.TextArea;
+import javafx.stage.Stage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,7 +183,7 @@ public class Main {
         conn = (JarURLConnection) url.openConnection();
         jarfile = conn.getJarFile();
 
-        in = jarfile.getInputStream(jarfile.getEntry("files/config.json"));
+        in = jarfile.getInputStream(jarfile.getEntry("config.json"));
 
         inputFileReader = new BufferedReader(new InputStreamReader(in));
 
