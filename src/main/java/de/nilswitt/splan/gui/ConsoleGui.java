@@ -120,7 +120,7 @@ public class ConsoleGui extends Application {
 
     private void initApplication() {
 
-        FileSystemConnector.createDatadirs();
+        FileSystemConnector.createDataDirs();
         Logger logger = LoggerConnector.getLogger();
         LoggerConnector.addJsonHandler();
         if (logger == null) return;
