@@ -2,7 +2,7 @@
  * Copyright (c) 2021. Nils Witt
  */
 
-package de.nilswitt.splan;
+package de.nilswitt.splan.gui;
 
 import javafx.scene.control.TextArea;
 
@@ -14,6 +14,7 @@ public class GuiLoggingHandler extends Handler {
 
     private final TextArea textArea;
     private final SimpleFormatter simpleFormatter = new SimpleFormatter();
+
     public GuiLoggingHandler(TextArea textArea) {
         this.textArea = textArea;
     }
@@ -30,7 +31,7 @@ public class GuiLoggingHandler extends Handler {
 
     @Override
     public void flush() {
-        synchronized (this.textArea){
+        synchronized (this.textArea) {
             this.textArea.clear();
         }
     }

@@ -2,9 +2,10 @@
  * Copyright (c) 2021. Nils Witt
  */
 
-package de.nilswitt.splan;
+package de.nilswitt.splan.FileHandlers;
 
 import com.google.gson.Gson;
+import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.dataModels.Course;
 import de.nilswitt.splan.dataModels.Lesson;
 import org.w3c.dom.Document;
@@ -38,9 +39,9 @@ public class Stundenplan {
             for (int i = 0; i < length; i++) {
                 //Ünerprüfen, dass das Element eine Node ist
                 if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                    NodeList nodeList =  nl.item(i).getChildNodes();
+                    NodeList nodeList = nl.item(i).getChildNodes();
                     String grade = null;
-                    for(int header = 0; header < nodeList.getLength(); header++){
+                    for (int header = 0; header < nodeList.getLength(); header++) {
                         if (nodeList.item(header).getNodeType() == Node.ELEMENT_NODE) {
                             Element el = (Element) nodeList.item(header);
 
@@ -63,19 +64,19 @@ public class Stundenplan {
             }
             System.out.println(gson.toJson(lessons));
             api.addLessons(lessons);
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-    public ArrayList<Lesson> hauptToLessons(Element hauptDOM,String grade){
+    public ArrayList<Lesson> hauptToLessons(Element hauptDOM, String grade) {
         NodeList lessons = hauptDOM.getChildNodes();
         ArrayList<Lesson> lessonArrayList = new ArrayList<>();
 
         int lessonsLenght = lessons.getLength();
 
-        for(int i = 0; i < lessonsLenght; i++){
+        for (int i = 0; i < lessonsLenght; i++) {
             if (lessons.item(i).getNodeType() == Node.ELEMENT_NODE) {
                 int lessonNumber = 0;
 
@@ -84,7 +85,7 @@ public class Stundenplan {
                 NodeList lessonInfos = lesson.getElementsByTagName("stunde");
                 int lessonInfoLenght = lessonInfos.getLength();
 
-                for(int lessonInfoCounter = 0; lessonInfoCounter < lessonInfoLenght; lessonInfoCounter++){
+                for (int lessonInfoCounter = 0; lessonInfoCounter < lessonInfoLenght; lessonInfoCounter++) {
                     if (lessons.item(i).getNodeType() == Node.ELEMENT_NODE) {
                         Element lessonInfo = (Element) lessonInfos.item(lessonInfoCounter);
                         lessonNumber = Integer.parseInt(lessonInfo.getTextContent());
@@ -94,7 +95,7 @@ public class Stundenplan {
                 NodeList lessonCourses = lesson.getChildNodes();
                 int lessonCoursesLength = lessonCourses.getLength();
 
-                for(int lessonCourseCounter = 0; lessonCourseCounter < lessonCoursesLength; lessonCourseCounter++){
+                for (int lessonCourseCounter = 0; lessonCourseCounter < lessonCoursesLength; lessonCourseCounter++) {
                     if (lessonCourses.item(lessonCourseCounter).getNodeType() == Node.ELEMENT_NODE) {
                         Lesson lessonModel = new Lesson();
                         lessonModel.setCourse(new Course());
@@ -113,18 +114,18 @@ public class Stundenplan {
                                 if (lessonCourse.getElementsByTagName("gruppe").getLength() > 0) {
                                     lessonModel.getCourse().setGroup(lessonCourse.getElementsByTagName("gruppe").item(0).getTextContent().substring(lessonModel.getCourse().getSubject().length()).replaceAll("\\s", ""));
                                 }
-                                if(lessonCourse.getElementsByTagName("lehrer").getLength() > 0){
-                                    String teacher = lessonCourse.getElementsByTagName("lehrer").item(0).getTextContent().substring(0,3);
+                                if (lessonCourse.getElementsByTagName("lehrer").getLength() > 0) {
+                                    String teacher = lessonCourse.getElementsByTagName("lehrer").item(0).getTextContent().substring(0, 3);
                                     lessonModel.setTeacher(teacher);
                                 }
-                                if(lessonCourse.getElementsByTagName("raum").getLength() > 0){
+                                if (lessonCourse.getElementsByTagName("raum").getLength() > 0) {
                                     lessonModel.setRoom(lessonCourse.getElementsByTagName("raum").item(0).getTextContent());
                                 }
-                                if(!lessonModel.getCourse().getSubject().equals("") && lessonModel.getTeacher() != null){
+                                if (!lessonModel.getCourse().getSubject().equals("") && lessonModel.getTeacher() != null) {
                                     lessonArrayList.add(lessonModel);
                                 }
 
-                            } catch (Exception e){
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         }
@@ -135,11 +136,11 @@ public class Stundenplan {
         return lessonArrayList;
     }
 
-    public String kopfToGrade(Element kopf){
+    public String kopfToGrade(Element kopf) {
         String grade = null;
         NodeList elements = kopf.getElementsByTagName("titel");
-        for(int i = 0; i < elements.getLength(); i++){
-            if(elements.item(i).getNodeType() == Node.ELEMENT_NODE){
+        for (int i = 0; i < elements.getLength(); i++) {
+            if (elements.item(i).getNodeType() == Node.ELEMENT_NODE) {
                 grade = elements.item(i).getTextContent();
             }
         }

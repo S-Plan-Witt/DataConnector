@@ -2,8 +2,9 @@
  * Copyright (c) 2021. Nils Witt
  */
 
-package de.nilswitt.splan;
+package de.nilswitt.splan.FileHandlers;
 
+import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.dataModels.Klausur;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
 import org.w3c.dom.Document;
@@ -19,10 +20,10 @@ import java.util.logging.Logger;
 public class Klausurplan {
     private final Api api;
     private final Logger logger;
-    private ArrayList<VertretungsLesson> vertretungsLessons = new ArrayList<>();
-    private ArrayList<String> replacementLessonIds = new ArrayList<>();
     private final ArrayList<String> lessonsOnServer = new ArrayList<>();
     private final ArrayList<Klausur> exams = new ArrayList<>();
+    private ArrayList<VertretungsLesson> vertretungsLessons = new ArrayList<>();
+    private ArrayList<String> replacementLessonIds = new ArrayList<>();
 
     public Klausurplan(Logger logger, Api api) {
         this.logger = logger;
@@ -30,7 +31,7 @@ public class Klausurplan {
     }
 
 
-    public void readDocument(Document document){
+    public void readDocument(Document document) {
         int length;
 
 
@@ -64,24 +65,24 @@ public class Klausurplan {
                         klausur.setRoom(room);
                         String teacher = el.getElementsByTagName("lehrer").item(0).getTextContent();
                         String[] parts = teacher.split(" ");
-                        if(parts.length == 2){
+                        if (parts.length == 2) {
                             klausur.setTeacher(parts[0]);
                             try {
                                 klausur.setStudents(Integer.parseInt(parts[1]));
-                            }catch (Exception e){
+                            } catch (Exception e) {
                                 klausur.setStudents(1);
                             }
                         }
 
                         String kurs = el.getElementsByTagName("kurs").item(0).getTextContent();
                         parts = kurs.split("-");
-                        if(parts.length == 2){
+                        if (parts.length == 2) {
                             klausur.setGroup(parts[1]);
                             klausur.setSubject(parts[0]);
                         }
-                        if(el.getElementsByTagName("anzeigen").getLength() == 1){
+                        if (el.getElementsByTagName("anzeigen").getLength() == 1) {
                             klausur.setDisplay(1);
-                        }else {
+                        } else {
                             klausur.setDisplay(0);
                         }
 
@@ -90,42 +91,42 @@ public class Klausurplan {
                             //7:50-9:20
                             parts = fromTo.split("-");
 
-                            if(parts.length == 2){
+                            if (parts.length == 2) {
                                 String[] from = parts[0].split(":");
-                                if(from.length != 2){
+                                if (from.length != 2) {
                                     from = parts[0].split("\\.");
                                 }
 
-                                if(from.length == 2){
+                                if (from.length == 2) {
                                     klausur.setFrom(from[0].concat(":").concat(from[1]));
                                 }
 
                                 String[] to = parts[1].split(":");
-                                if(to.length != 2){
+                                if (to.length != 2) {
                                     to = parts[1].split("\\.");
                                 }
 
-                                if(to.length == 2){
+                                if (to.length == 2) {
                                     klausur.setTo(to[0].concat(":").concat(to[1]));
                                 }
                             }
                             exams.add(klausur);
-                        } catch (Exception e){
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
-                    } catch (Exception e){
+                    } catch (Exception e) {
                         System.out.println("Error reading Element");
                     }
                 }
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         api.addVertretungen(vertretungsLessons);
     }
 
-    public void pushExams(){
+    public void pushExams() {
         api.addExams(exams);
     }
 }

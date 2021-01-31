@@ -2,13 +2,15 @@
  * Copyright (c) 2021. Nils Witt
  */
 
-package de.nilswitt.splan;
+package de.nilswitt.splan.connectors;
 
 import com.google.gson.Gson;
+import de.nilswitt.splan.dataModels.Config;
 import de.nilswitt.splan.dataModels.Klausur;
 import de.nilswitt.splan.dataModels.Lesson;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
 import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -16,57 +18,60 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Api {
-    private final Logger logger;
-    private final String backend;
-    private String bearer;
+    private final Logger logger = LoggerConnector.getLogger();
     private final OkHttpClient client;
+    private final Config config;
     private final Gson gson = new Gson();
     private final MediaType mediaType = MediaType.parse("application/json");
 
 
-    public Api(Logger logger, String backend) {
-        this.logger = logger;
-        this.backend = backend;
-        client = new OkHttpClient.Builder()
+    public Api(Config config) {
+        this.config = config;
+        this.client = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(180, TimeUnit.SECONDS)
                 .build();
     }
 
-
-    public boolean verifyBearer(String bearer) {
+    /**
+     * Überprüfen der Gültigkeit des Zugriffstoken auf die Api
+     *
+     * @param logger Filelogger
+     * @param bearer token for api access
+     * @param url    base api url
+     * @return validity of bearer to given url
+     */
+    public static boolean verifyBearer(@NotNull Logger logger, @NotNull String bearer, @NotNull String url) {
+        OkHttpClient client = new OkHttpClient();
         boolean isValid = false;
-
         Request request = new Request.Builder()
-                .url(backend.concat("/user"))
+                .url(url.concat("/user"))
                 .addHeader("Authorization", "Bearer ".concat(bearer))
                 .build();
         try {
             Response response = client.newCall(request).execute();
+            // Api gibt den status 200 zurück, wenn alles  gültig ist.
             if (response.code() == 200) {
                 isValid = true;
-                this.bearer = bearer;
                 logger.info("Bearer valid");
             } else {
-                //bearer invalid
                 logger.log(Level.WARNING, "Bearer invalid");
             }
-            response.close();
         } catch (java.net.UnknownHostException e) {
-            //URL invalid
-            logger.log(Level.WARNING, "API-Host not found");
+            //URL der Api ist nicht gültig
+            logger.log(Level.WARNING, "Host not found");
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Exception while verifying Bearer", e);
+            logger.log(Level.WARNING, "Exception while verifying Bearer");
         }
 
         return isValid;
     }
 
-    public VertretungsLesson[] getVertretungenByDate(String date){
+    public VertretungsLesson[] getVertretungenByDate(String date) {
         Request request = new Request.Builder()
-                .url(backend.concat("/replacementLessons/date/").concat(date))
-                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .url(this.config.getUrl().concat("/replacementLessons/date/").concat(date))
+                .addHeader("Authorization", "Bearer ".concat(this.config.getBearer()))
                 .build();
 
         try {
@@ -75,17 +80,17 @@ public class Api {
             String json = response.body().string();
             response.close();
             return gson.fromJson(json, VertretungsLesson[].class);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
 
     }
 
-    public Lesson[] getLessons(){
+    public Lesson[] getLessons() {
         Request request = new Request.Builder()
-                .url(backend.concat("/timeTable/lessons"))
-                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .url(this.config.getUrl().concat("/timeTable/lessons"))
+                .addHeader("Authorization", "Bearer ".concat(this.config.getBearer()))
                 .build();
 
         try {
@@ -94,74 +99,72 @@ public class Api {
             String json = response.body().string();
             response.close();
             return gson.fromJson(json, Lesson[].class);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
 
     }
 
-    public void deleteVertretung(String id){
+    public void deleteVertretung(String id) {
         Request request = new Request.Builder()
-                .url(backend.concat("/replacementLessons/id/").concat(id))
+                .url(this.config.getUrl().concat("/replacementLessons/id/").concat(id))
                 .delete()
-                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .addHeader("Authorization", "Bearer ".concat(this.config.getBearer()))
                 .build();
 
         try {
             Response response = client.newCall(request).execute();
             response.close();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void addVertretungen(ArrayList<VertretungsLesson> vertretungen){
+    public void addVertretungen(ArrayList<VertretungsLesson> vertretungen) {
 
         RequestBody body = RequestBody.create(mediaType, gson.toJson(vertretungen));
         Request request = new Request.Builder()
-                .url(backend.concat("/replacementLessons"))
+                .url(this.config.getUrl().concat("/replacementLessons"))
                 .post(body)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .addHeader("Authorization", "Bearer ".concat(this.config.getBearer()))
                 .build();
 
         try {
             Response response = client.newCall(request).execute();
-            System.out.println(response.code());
             response.close();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void addLessons(ArrayList<Lesson> lessons){
+    public void addLessons(ArrayList<Lesson> lessons) {
 
         RequestBody body = RequestBody.create(mediaType, gson.toJson(lessons));
         Request request = new Request.Builder()
-                .url(backend.concat("/timetable/lessons"))
+                .url(this.config.getUrl().concat("/timetable/lessons"))
                 .post(body)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .addHeader("Authorization", "Bearer ".concat(this.config.getBearer()))
                 .build();
 
         try {
             Response response = client.newCall(request).execute();
-            System.out.println(response.code());
             response.close();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public VertretungsLesson[] getReplacementLessonByFilter(String info){
+    public VertretungsLesson[] getReplacementLessonByFilter(String info) {
 
         RequestBody body = RequestBody.create(mediaType, "{\"info\":\"" + info + "\"}");
 
         Request request = new Request.Builder()
-                .url(backend.concat("/replacementLessons/find/"))
+                .url(this.config.getUrl().concat("/replacementLessons/find/"))
                 .post(body)
-                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .addHeader("Authorization", "Bearer ".concat(this.config.getBearer()))
                 .build();
         try {
             Response response = client.newCall(request).execute();
@@ -169,27 +172,25 @@ public class Api {
             String json = response.body().string();
             response.close();
             return gson.fromJson(json, VertretungsLesson[].class);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public void addExams(ArrayList<Klausur> exams){
+    public void addExams(ArrayList<Klausur> exams) {
         RequestBody body = RequestBody.create(mediaType, gson.toJson(exams));
-        System.out.println(gson.toJson(exams));
         Request request = new Request.Builder()
-                .url(backend.concat("/exams"))
+                .url(this.config.getUrl().concat("/exams"))
                 .post(body)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer ".concat(bearer))
+                .addHeader("Authorization", "Bearer ".concat(this.config.getBearer()))
                 .build();
 
         try {
             Response response = client.newCall(request).execute();
-            System.out.println(response.code());
             response.close();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

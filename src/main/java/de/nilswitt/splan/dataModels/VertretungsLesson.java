@@ -22,14 +22,6 @@ public class VertretungsLesson {
     private String replacementId;
     private int lessonId;
 
-    public int getLessonId() {
-        return lessonId;
-    }
-
-    public void setLessonId(int lessonId) {
-        this.lessonId = lessonId;
-    }
-
     public VertretungsLesson() {
 
     }
@@ -47,6 +39,14 @@ public class VertretungsLesson {
         this.lessonId = lesson.lessonId;
     }
 
+    public int getLessonId() {
+        return lessonId;
+    }
+
+    public void setLessonId(int lessonId) {
+        this.lessonId = lessonId;
+    }
+
     public String getDate() {
         return date;
     }
@@ -58,11 +58,11 @@ public class VertretungsLesson {
 
 
             String[] parts = date.split("-");
-            if(parts.length > 3){
-                if (parts[1].length() < 2){
+            if (parts.length > 3) {
+                if (parts[1].length() < 2) {
                     parts[1] = "0".concat(parts[1]);
                 }
-                if (parts[2].length() < 2){
+                if (parts[2].length() < 2) {
                     parts[3] = "0".concat(parts[3]);
                 }
 
@@ -72,7 +72,7 @@ public class VertretungsLesson {
                 System.out.println(localDate.getDayOfWeek().getValue());
             }
         } catch (Exception e) {
-            Logger.getGlobal().log(Level.WARNING,e.toString());
+            Logger.getGlobal().log(Level.WARNING, e.toString());
         }
     }
 
@@ -85,7 +85,7 @@ public class VertretungsLesson {
             LocalDate localDate = LocalDate.parse(this.date, formatter);
             this.weekday = localDate.getDayOfWeek().getValue();
         } catch (Exception e) {
-            Logger.getGlobal().log(Level.WARNING,e.toString());
+            Logger.getGlobal().log(Level.WARNING, e.toString());
         }
     }
 

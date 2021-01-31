@@ -2,7 +2,7 @@
  * Copyright (c) 2021. Nils Witt
  */
 
-package de.nilswitt.splan;
+package de.nilswitt.splan.dataModels;
 
 public class Config {
     private String bearer;

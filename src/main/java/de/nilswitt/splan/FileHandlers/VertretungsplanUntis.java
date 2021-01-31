@@ -2,9 +2,10 @@
  * Copyright (c) 2021. Nils Witt
  */
 
-package de.nilswitt.splan;
+package de.nilswitt.splan.FileHandlers;
 
 import com.google.gson.Gson;
+import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.dataModels.Course;
 import de.nilswitt.splan.dataModels.Lesson;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
@@ -70,7 +71,7 @@ public class VertretungsplanUntis {
             cell = row.getCell(0);
             if (cell != null && cell.getCellType() == CellType.NUMERIC) {
                 String eventType = row.getCell(1).getStringCellValue();
-                if (!eventType.equals("Pausenaufsicht"))  {
+                if (!eventType.equals("Pausenaufsicht")) {
                     try {
 
                         String[] lessonNumbers = new String[]{};

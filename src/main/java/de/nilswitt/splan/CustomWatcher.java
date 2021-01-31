@@ -4,6 +4,11 @@
 
 package de.nilswitt.splan;
 
+import de.nilswitt.splan.FileHandlers.*;
+import de.nilswitt.splan.connectors.FileSystemConnector;
+import de.nilswitt.splan.connectors.LoggerConnector;
+import de.nilswitt.splan.connectors.TrayNotification;
+import de.nilswitt.splan.dataModels.Config;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
 import org.w3c.dom.Document;
 
@@ -16,18 +21,19 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class CustomWatcher {
+public class CustomWatcher implements Runnable {
     private final Vertretungsplan vertretungsplan;
     private final Stundenplan stundenplan;
     private final Klausurplan klausurplan;
     private final Logger logger;
     private final Config config;
     private final Path watchPath;
-    private final String path;
     private final VertretungsplanUntis vertretungsplanUntis;
     private final StundenplanUntis stundenplanUntis;
+    private boolean isStarted = false;
+    private WatchService watchService;
 
-    public CustomWatcher(Vertretungsplan vertretungsplan, VertretungsplanUntis vertretungsplanUntis, Stundenplan stundenplan, StundenplanUntis stundenplanUntis, Klausurplan klausurplan, Logger logger, Config config, String path) {
+    public CustomWatcher(Vertretungsplan vertretungsplan, VertretungsplanUntis vertretungsplanUntis, Stundenplan stundenplan, StundenplanUntis stundenplanUntis, Klausurplan klausurplan, Logger logger, Config config) {
         this.vertretungsplan = vertretungsplan;
         this.vertretungsplanUntis = vertretungsplanUntis;
         this.stundenplan = stundenplan;
@@ -35,29 +41,46 @@ public class CustomWatcher {
         this.klausurplan = klausurplan;
         this.logger = logger;
         this.config = config;
-        this.watchPath = Paths.get(path.concat("/watchDir"));
-        this.path = path;
+        this.watchPath = Path.of(FileSystemConnector.getWorkingDir().concat("/data/watcher"));
 
     }
 
-    public void start() throws IOException, InterruptedException {
+    @Override
+    public synchronized void run() {
+        logger.info("Watcher is starting");
+        try {
+            startWatcher();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-        Path watcherPath = Paths.get(this.path.concat("/watchDir"));
+    public void shutdown() throws IOException {
+        logger.info("Watcher is stopping");
+        watchService.close();
+        isStarted = false;
+    }
 
-        WatchService watchService = watcherPath.getFileSystem().newWatchService();
+    public boolean isRunning() {
+        return isStarted;
+    }
 
-        watcherPath.register(watchService,
+    private void startWatcher() throws IOException, InterruptedException {
+        watchService = this.watchPath.getFileSystem().newWatchService();
+
+        this.watchPath.register(watchService,
                 StandardWatchEventKinds.ENTRY_CREATE,
                 StandardWatchEventKinds.ENTRY_DELETE,
                 StandardWatchEventKinds.ENTRY_MODIFY);
-        System.out.println("Watcher started");
+        LoggerConnector.getLogger().info("Watcher started");
+        isStarted = true;
         WatchKey key;
         while (true) {
             key = watchService.take();
             for (WatchEvent<?> event : key.pollEvents()) {
-                System.out.println(event.context());
-                if(!event.context().toString().startsWith("~$")){
-                    fileProccessor(event.context().toString());
+                LoggerConnector.getLogger().info(event.context().toString());
+                if (!event.context().toString().startsWith("~$")) {
+                    fileProcessor(event.context().toString());
                 }
 
             }
@@ -65,21 +88,21 @@ public class CustomWatcher {
         }
     }
 
-    public void fileProccessor(String changed) {
+    public void fileProcessor(String changed) {
         try {
 
             if (changed.endsWith(".xml")) {
                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder builder = factory.newDocumentBuilder();
 
-                InputStream in = Files.newInputStream(Paths.get(path.concat("/watchDir/").concat(changed)));
+                InputStream in = Files.newInputStream(Paths.get(this.watchPath.toString().concat(changed)));
                 Document document = builder.parse(in);
 
                 String nodeName;
                 //Laden der base XML node, anhand dieser kann der Inhaltstyp ermittelt werden
                 nodeName = document.getLastChild().getNodeName();
                 if (config.getTrayNotifications()) {
-                    Main.displayTrayNotification("Änderung erkannt", "Datei: ".concat(nodeName));
+                    TrayNotification.display("Änderung erkannt", "Datei: ".concat(nodeName));
                 }
 
                 switch (nodeName) {
@@ -102,12 +125,12 @@ public class CustomWatcher {
                 }
 
             } else if (changed.endsWith(".xlsx")) {
-                logger.log(Level.INFO, "Excel: " + Paths.get(path.concat("/watchDir/").concat(changed)));
-                ArrayList<VertretungsLesson> vertretungsLessons = vertretungsplanUntis.readXslx(Paths.get(path.concat("/watchDir/").concat(changed)).toString());
+                logger.log(Level.INFO, "Excel: " + Paths.get(this.watchPath.toString().concat(changed)));
+                ArrayList<VertretungsLesson> vertretungsLessons = vertretungsplanUntis.readXslx(Paths.get(this.watchPath.toString().concat(changed)).toString());
                 vertretungsplanUntis.compareVplanLocalWithApi(vertretungsLessons);
             } else if (changed.toLowerCase().endsWith(".txt")) {
-                logger.log(Level.INFO, "DIF: " + Paths.get(path.concat("/watchDir/").concat(changed)));
-                stundenplanUntis.readDocument(Paths.get(path.concat("/watchDir/").concat(changed)).toString());
+                logger.log(Level.INFO, "DIF: " + Paths.get(this.watchPath.toString().concat(changed)));
+                stundenplanUntis.readDocument(Paths.get(this.watchPath.toString().concat(changed)).toString());
             }
         } catch (Exception e) {
             e.printStackTrace();

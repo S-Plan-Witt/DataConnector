@@ -2,14 +2,15 @@
  * Copyright (c) 2021. Nils Witt
  */
 
-package de.nilswitt.splan;
+package de.nilswitt.splan.FileHandlers;
 
 import com.google.gson.Gson;
+import de.nilswitt.splan.Utils;
+import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.dataModels.Aufsicht;
 import de.nilswitt.splan.dataModels.Course;
 import de.nilswitt.splan.dataModels.Lesson;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -34,7 +35,7 @@ public class Vertretungsplan {
 
     public void readDocument(Document document) {
         Lesson[] lessonsApi = api.getLessons();
-        if(lessonsApi.length > 0){
+        if (lessonsApi.length > 0) {
             System.out.println(gson.toJson(lessonsApi[0]));
         }
 
@@ -93,12 +94,12 @@ public class Vertretungsplan {
                                     lesson.setCourse(course);
                                     //Vertretung dem Array aller Vertretungen hinzufügen
                                     for (Lesson apiLesson : lessonsApi) {
-                                        if(lesson.getCourse().getGrade().equals(apiLesson.getCourse().getGrade())){
-                                            if (lesson.getCourse().getSubject().equals(apiLesson.getCourse().getSubject())){
-                                                if (lesson.getCourse().getGroup().equals(apiLesson.getCourse().getGroup())){
-                                                    if (lesson.getLessonNumber() == apiLesson.getLessonNumber()){
-                                                        if(lesson.getWeekday() == apiLesson.getDay()){
-                                                            System.out.println("Found:"+ apiLesson.getId());
+                                        if (lesson.getCourse().getGrade().equals(apiLesson.getCourse().getGrade())) {
+                                            if (lesson.getCourse().getSubject().equals(apiLesson.getCourse().getSubject())) {
+                                                if (lesson.getCourse().getGroup().equals(apiLesson.getCourse().getGroup())) {
+                                                    if (lesson.getLessonNumber() == apiLesson.getLessonNumber()) {
+                                                        if (lesson.getWeekday() == apiLesson.getDay()) {
+                                                            System.out.println("Found:" + apiLesson.getId());
                                                             lesson.setLessonId(apiLesson.getId());
                                                             break;
                                                         }
@@ -144,7 +145,7 @@ public class Vertretungsplan {
         }
     }
 
-    private void compareVplanLocalWithApi(List<VertretungsLesson> lessons){
+    private void compareVplanLocalWithApi(List<VertretungsLesson> lessons) {
         ArrayList<String> localDates = new ArrayList<>();
 
         ArrayList<VertretungsLesson> lessonsServer = new ArrayList<>();
@@ -156,7 +157,7 @@ public class Vertretungsplan {
 
         //Get from all lesson the dates and add them to unique list
         for (VertretungsLesson lesson : lessons) {
-            if(!localDates.contains(lesson.getDate())){
+            if (!localDates.contains(lesson.getDate())) {
                 localDates.add(lesson.getDate());
             }
 
@@ -164,7 +165,7 @@ public class Vertretungsplan {
         }
 
         //Load vertretungen for each day
-        for (String date : localDates){
+        for (String date : localDates) {
 
             VertretungsLesson[] vertretungsLesson = api.getVertretungenByDate(date);
             for (VertretungsLesson lesson : vertretungsLesson) {
@@ -177,18 +178,18 @@ public class Vertretungsplan {
 
         for (VertretungsLesson vertretungsLesson : lessonsServer) {
             //System.out.println(vertretungsLesson.getReplacementId());
-            if(!lessonsLocalIds.contains(vertretungsLesson.getReplacementId())) {
-                if(!vertretungsLesson.getInfo().equals("Klausuraufsicht")){
+            if (!lessonsLocalIds.contains(vertretungsLesson.getReplacementId())) {
+                if (!vertretungsLesson.getInfo().equals("Klausuraufsicht")) {
                     //System.out.println("removed: ".concat(vertretungsLesson.getReplacementId()));
                     removedLessonsIds.add(vertretungsLesson.getReplacementId());
                 }
-            }else {
+            } else {
                 int pos = lessonsLocalIds.indexOf(vertretungsLesson.getReplacementId());
                 VertretungsLesson localLesson = lessons.get(pos);
                 //System.out.println(gson.toJson(localLesson));
                 //System.out.println(gson.toJson(vertretungsLesson));
                 //TODO add validation of teacher
-                if(!(vertretungsLesson.getRoom().equals(localLesson.getRoom()) && vertretungsLesson.getInfo().equals(localLesson.getInfo()) && vertretungsLesson.getSubject().equals(localLesson.getSubject() ))){
+                if (!(vertretungsLesson.getRoom().equals(localLesson.getRoom()) && vertretungsLesson.getInfo().equals(localLesson.getInfo()) && vertretungsLesson.getSubject().equals(localLesson.getSubject()))) {
                     //System.out.println("updated: ".concat(vertretungsLesson.getReplacementId()));
                     updatedLessons.add(localLesson);
                 }
@@ -196,7 +197,7 @@ public class Vertretungsplan {
         }
         ArrayList<VertretungsLesson> addedLessons = new ArrayList<>();
         for (VertretungsLesson lesson : lessons) {
-            if(!lessonsServerIds.contains(lesson.getReplacementId())){
+            if (!lessonsServerIds.contains(lesson.getReplacementId())) {
                 //System.out.println("added: ".concat(lesson.getReplacementId()).concat(",pos: ").concat(String.valueOf(lessonsLocalIds.indexOf(lesson.getReplacementId()))));
                 addedLessons.add(lesson);
                 //System.out.println(lesson.getReplacementId());

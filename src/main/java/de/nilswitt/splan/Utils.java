@@ -31,7 +31,7 @@ public class Utils {
         String year = parts[3];
         String month = Integer.toString(monthInt);
         String day = parts[1].substring(0, parts[1].length() - 1);
-        if(day.length() == 1){
+        if (day.length() == 1) {
             day = 0 + day;
         }
         System.out.println(year + "-" + month + "-" + day);
