@@ -5,11 +5,13 @@
 package de.nilswitt.splan;
 
 import de.nilswitt.splan.FileHandlers.*;
+import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.connectors.FileSystemConnector;
-import de.nilswitt.splan.connectors.LoggerConnector;
 import de.nilswitt.splan.connectors.TrayNotification;
 import de.nilswitt.splan.dataModels.Config;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -18,14 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class CustomWatcher implements Runnable {
+    private static final Logger logger = LogManager.getLogger(ConfigConnector.class);
     private final Vertretungsplan vertretungsplan;
     private final Stundenplan stundenplan;
     private final Klausurplan klausurplan;
-    private final Logger logger;
     private final Config config;
     private final Path watchPath;
     private final VertretungsplanUntis vertretungsplanUntis;
@@ -73,16 +73,23 @@ public class CustomWatcher implements Runnable {
         logger.info("Watcher started");
         isStarted = true;
         WatchKey key;
-        while (true) {
-            key = watchService.take();
-            for (WatchEvent<?> event : key.pollEvents()) {
-                LoggerConnector.getLogger().info(event.context().toString());
-                if (!event.context().toString().startsWith("~$")) {
-                    fileProcessor(event.context().toString());
-                }
+        try {
+            while (true) {
+                key = watchService.take();
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    logger.info(event.context().toString());
+                    if (!event.context().toString().startsWith("~$")) {
+                        fileProcessor(event.context().toString());
+                    }
 
+                }
+                key.reset();
             }
-            key.reset();
+        } catch (ClosedWatchServiceException ex) {
+            //No need to handle
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            logger.fatal(ex);
         }
     }
 
