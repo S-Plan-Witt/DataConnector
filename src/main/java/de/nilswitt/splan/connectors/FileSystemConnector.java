@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 public class FileSystemConnector {
-
+    private static final Logger logger = LogManager.getLogger(FileSystemConnector.class);
 
     /**
      * Copy a file from source to destination.
