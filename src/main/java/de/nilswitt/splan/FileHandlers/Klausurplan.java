@@ -7,6 +7,8 @@ package de.nilswitt.splan.FileHandlers;
 import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.dataModels.Klausur;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -15,18 +17,16 @@ import org.w3c.dom.NodeList;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 public class Klausurplan {
+    private static final Logger logger = LogManager.getLogger(Klausurplan.class);
     private final Api api;
-    private final Logger logger;
     private final ArrayList<String> lessonsOnServer = new ArrayList<>();
     private final ArrayList<Klausur> exams = new ArrayList<>();
     private ArrayList<VertretungsLesson> vertretungsLessons = new ArrayList<>();
     private ArrayList<String> replacementLessonIds = new ArrayList<>();
 
-    public Klausurplan(Logger logger, Api api) {
-        this.logger = logger;
+    public Klausurplan(Api api) {
         this.api = api;
     }
 
@@ -115,11 +115,12 @@ public class Klausurplan {
                             e.printStackTrace();
                         }
                     } catch (Exception e) {
-                        System.out.println("Error reading Element");
+                        logger.warn("Error reading Element", e);
                     }
                 }
             }
         } catch (Exception e) {
+            logger.fatal(e);
             e.printStackTrace();
         }
 

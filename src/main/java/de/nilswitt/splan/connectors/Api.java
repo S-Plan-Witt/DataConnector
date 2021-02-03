@@ -10,15 +10,15 @@ import de.nilswitt.splan.dataModels.Klausur;
 import de.nilswitt.splan.dataModels.Lesson;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
 import okhttp3.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Api {
-    private final Logger logger = LoggerConnector.getLogger();
+    private static final Logger logger = LogManager.getLogger(Api.class);
     private final OkHttpClient client;
     private final Config config;
     private final Gson gson = new Gson();
@@ -37,12 +37,11 @@ public class Api {
     /**
      * Überprüfen der Gültigkeit des Zugriffstoken auf die Api
      *
-     * @param logger Filelogger
      * @param bearer token for api access
      * @param url    base api url
      * @return validity of bearer to given url
      */
-    public static boolean verifyBearer(@NotNull Logger logger, @NotNull String bearer, @NotNull String url) {
+    public static boolean verifyBearer(@NotNull String bearer, @NotNull String url) {
         OkHttpClient client = new OkHttpClient();
         boolean isValid = false;
         Request request = new Request.Builder()
@@ -56,13 +55,12 @@ public class Api {
                 isValid = true;
                 logger.info("Bearer valid");
             } else {
-                logger.log(Level.WARNING, "Bearer invalid");
+                logger.warn("Bearer invalid");
             }
         } catch (java.net.UnknownHostException e) {
-            //URL der Api ist nicht gültig
-            logger.log(Level.WARNING, "Host not found");
+            logger.warn("Host not reachable");
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Exception while verifying Bearer");
+            logger.warn("Exception while verifying Bearer");
         }
 
         return isValid;

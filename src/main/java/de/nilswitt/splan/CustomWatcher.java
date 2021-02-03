@@ -33,16 +33,14 @@ public class CustomWatcher implements Runnable {
     private boolean isStarted = false;
     private WatchService watchService;
 
-    public CustomWatcher(Vertretungsplan vertretungsplan, VertretungsplanUntis vertretungsplanUntis, Stundenplan stundenplan, StundenplanUntis stundenplanUntis, Klausurplan klausurplan, Logger logger, Config config) {
+    public CustomWatcher(Vertretungsplan vertretungsplan, VertretungsplanUntis vertretungsplanUntis, Stundenplan stundenplan, StundenplanUntis stundenplanUntis, Klausurplan klausurplan, Config config) {
         this.vertretungsplan = vertretungsplan;
         this.vertretungsplanUntis = vertretungsplanUntis;
         this.stundenplan = stundenplan;
         this.stundenplanUntis = stundenplanUntis;
         this.klausurplan = klausurplan;
-        this.logger = logger;
         this.config = config;
         this.watchPath = Path.of(FileSystemConnector.getWorkingDir().concat("/data/watcher"));
-
     }
 
     @Override
@@ -72,7 +70,7 @@ public class CustomWatcher implements Runnable {
                 StandardWatchEventKinds.ENTRY_CREATE,
                 StandardWatchEventKinds.ENTRY_DELETE,
                 StandardWatchEventKinds.ENTRY_MODIFY);
-        LoggerConnector.getLogger().info("Watcher started");
+        logger.info("Watcher started");
         isStarted = true;
         WatchKey key;
         while (true) {
@@ -125,11 +123,11 @@ public class CustomWatcher implements Runnable {
                 }
 
             } else if (changed.endsWith(".xlsx")) {
-                logger.log(Level.INFO, "Excel: " + Paths.get(this.watchPath.toString().concat(changed)));
+                logger.info("Excel: " + Paths.get(this.watchPath.toString().concat(changed)));
                 ArrayList<VertretungsLesson> vertretungsLessons = vertretungsplanUntis.readXslx(Paths.get(this.watchPath.toString().concat(changed)).toString());
                 vertretungsplanUntis.compareVplanLocalWithApi(vertretungsLessons);
             } else if (changed.toLowerCase().endsWith(".txt")) {
-                logger.log(Level.INFO, "DIF: " + Paths.get(this.watchPath.toString().concat(changed)));
+                logger.info("DIF: " + Paths.get(this.watchPath.toString().concat(changed)));
                 stundenplanUntis.readDocument(Paths.get(this.watchPath.toString().concat(changed)).toString());
             }
         } catch (Exception e) {

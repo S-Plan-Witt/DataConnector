@@ -6,22 +6,25 @@ package de.nilswitt.splan.gui;
 
 import de.nilswitt.splan.CustomWatcher;
 import de.nilswitt.splan.FileHandlers.*;
-import de.nilswitt.splan.connectors.*;
+import de.nilswitt.splan.connectors.Api;
+import de.nilswitt.splan.connectors.ConfigConnector;
+import de.nilswitt.splan.connectors.FileSystemConnector;
 import de.nilswitt.splan.dataModels.Config;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.ImageObserver;
-import java.awt.image.ImageProducer;
-import java.util.logging.Logger;
+
 
 public class ConsoleGui extends Application {
 
+    private final Logger logger = LogManager.getLogger(ConsoleGui.class);
     private Vertretungsplan vertretungsplan;
     private Stundenplan stundenplan;
     private Klausurplan klausurenplan;
@@ -30,9 +33,6 @@ public class ConsoleGui extends Application {
     private CustomWatcher customWatcher;
     private Config config;
     private Api api;
-
-    private Logger logger;
-
     private Thread watcherThread;
 
     public static void launchGui() {
@@ -46,18 +46,21 @@ public class ConsoleGui extends Application {
      */
     @Override
     public void start(Stage primaryStage) {
-        this.logger = LoggerConnector.getLogger();
-        AnchorPane rootLayout;
+        Scene scene;
+        javafx.scene.control.TextArea area;
+        javafx.scene.control.TextField field;
+        BorderPane border;
+
         try {
             FXMLLoader loader = new FXMLLoader(Thread.currentThread().getContextClassLoader().getResource("fxml/mainview.fxml"));
-            rootLayout = loader.load();
+
+            primaryStage.setScene(new Scene(loader.load()));
             Controller controller = loader.getController();
             controller.setConsoleGui(this);
-
-            primaryStage.setScene(new Scene(rootLayout));
             primaryStage.setTitle("Console");
+            primaryStage.sizeToScene();
             primaryStage.show();
-
+            this.logger.info("Controller Done");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,14 +72,12 @@ public class ConsoleGui extends Application {
     private void enableSysTray() {
 
         if (!SystemTray.isSupported()) {
-            logger.warning("SystemTray is not supported");
+            logger.warn("SystemTray is not supported");
             return;
         }
         logger.info("SystemTray is supported");
 
-
         try {
-
 
             final PopupMenu popup = new PopupMenu();
             final TrayIcon trayIcon = new TrayIcon(ImageIO.read(FileSystemConnector.getResource("img/TrayIcon.png")));
@@ -111,9 +112,10 @@ public class ConsoleGui extends Application {
             try {
                 tray.add(trayIcon);
             } catch (AWTException e) {
-                System.out.println("TrayIcon could not be added.");
+                logger.fatal("TrayIcon could not be added.", e);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
+            logger.fatal(e);
             e.printStackTrace();
         }
     }
@@ -121,11 +123,8 @@ public class ConsoleGui extends Application {
     private void initApplication() {
 
         FileSystemConnector.createDataDirs();
-        Logger logger = LoggerConnector.getLogger();
-        LoggerConnector.addJsonHandler();
-        if (logger == null) return;
 
-        config = ConfigConnector.loadConfig(logger);
+        config = ConfigConnector.loadConfig();
         if (config == null) {
             try {
                 ConfigConnector.copyDefaultConfig();
@@ -137,105 +136,37 @@ public class ConsoleGui extends Application {
             return;
         }
 
-        if (!Api.verifyBearer(logger, config.getBearer(), config.getUrl())) {
+        if (!Api.verifyBearer(config.getBearer(), config.getUrl())) {
             //Falls nicht config null setzen.
-            logger.warning("Api token invalid");
+            logger.warn("Api token invalid");
 
             //return;
         }
 
         api = new Api(config);
 
-        vertretungsplan = new Vertretungsplan(this.logger, api);
-        stundenplan = new Stundenplan(this.logger, api);
-        klausurenplan = new Klausurplan(this.logger, api);
-        vertretungsplanUntis = new VertretungsplanUntis(this.logger, api);
-        stundenplanUntis = new StundenplanUntis(this.logger, api);
+        vertretungsplan = new Vertretungsplan(api);
+        stundenplan = new Stundenplan(api);
+        klausurenplan = new Klausurplan(api);
+        vertretungsplanUntis = new VertretungsplanUntis(api);
+        stundenplanUntis = new StundenplanUntis(api);
 
-        customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, stundenplanUntis, klausurenplan, logger, config);
+        customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, stundenplanUntis, klausurenplan, config);
 
         watcherThread = new Thread(customWatcher);
-        logger.info("Done initsi");
-    }
-
-
-    public Vertretungsplan getVertretungsplan() {
-        return vertretungsplan;
-    }
-
-    public void setVertretungsplan(Vertretungsplan vertretungsplan) {
-        this.vertretungsplan = vertretungsplan;
-    }
-
-    public Stundenplan getStundenplan() {
-        return stundenplan;
-    }
-
-    public void setStundenplan(Stundenplan stundenplan) {
-        this.stundenplan = stundenplan;
-    }
-
-    public Klausurplan getKlausurenplan() {
-        return klausurenplan;
-    }
-
-    public void setKlausurenplan(Klausurplan klausurenplan) {
-        this.klausurenplan = klausurenplan;
-    }
-
-    public VertretungsplanUntis getVertretungsplanUntis() {
-        return vertretungsplanUntis;
-    }
-
-    public void setVertretungsplanUntis(VertretungsplanUntis vertretungsplanUntis) {
-        this.vertretungsplanUntis = vertretungsplanUntis;
-    }
-
-    public StundenplanUntis getStundenplanUntis() {
-        return stundenplanUntis;
-    }
-
-    public void setStundenplanUntis(StundenplanUntis stundenplanUntis) {
-        this.stundenplanUntis = stundenplanUntis;
+        logger.info("Done initialisation");
     }
 
     public CustomWatcher getCustomWatcher() {
         return customWatcher;
     }
 
-    public void setCustomWatcher(CustomWatcher customWatcher) {
-        this.customWatcher = customWatcher;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
-    }
-
-    public Api getApi() {
-        return api;
-    }
-
-    public void setApi(Api api) {
-        this.api = api;
-    }
-
-    public Logger getLogger() {
-        return logger;
-    }
-
-    public void setLogger(Logger logger) {
-        this.logger = logger;
-    }
-
     public Thread getWatcherThread() {
         return watcherThread;
     }
 
-    public void setWatcherThread(Thread watcherThread) {
-        this.watcherThread = watcherThread;
+    public void resetWatcherThread() {
+        customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, stundenplanUntis, klausurenplan, config);
+        watcherThread = new Thread(customWatcher);
     }
 }

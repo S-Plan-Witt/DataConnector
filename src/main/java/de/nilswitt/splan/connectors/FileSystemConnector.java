@@ -4,6 +4,9 @@
 
 package de.nilswitt.splan.connectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,16 +21,14 @@ public class FileSystemConnector {
     /**
      * Copy a file from source to destination.
      *
-     * @param source
-     *        the source
-     * @param destination
-     *        the destination
+     * @param source      the source
+     * @param destination the destination
      * @return True if succeeded , False if not
      */
-    public static boolean copy(InputStream source , String destination) {
+    public static boolean copy(InputStream source, String destination) {
         boolean succeess = true;
 
-        System.out.println("Copying ->" + source + "\n\tto ->" + destination);
+        logger.info("Copying ->" + source + "\n\tto ->" + destination);
 
         try {
             Files.copy(source, Paths.get(destination), StandardCopyOption.REPLACE_EXISTING);
@@ -41,19 +42,20 @@ public class FileSystemConnector {
 
     }
 
-    public static String getWorkingDir(){
+    public static String getWorkingDir() {
         return Paths.get("").toAbsolutePath().toString();
     }
 
-    public static void createDataDirs(){
-        File dataDir = new File(getWorkingDir()+ "/data/");
+    public static void createDataDirs() {
+        File dataDir = new File(getWorkingDir() + "/data/");
         dataDir.mkdir();
-        File logDir = new File(getWorkingDir()+ "/data/logs");
+        File logDir = new File(getWorkingDir() + "/data/logs");
         logDir.mkdir();
-        File watchDir = new File(getWorkingDir()+ "/data/watcher");
+        File watchDir = new File(getWorkingDir() + "/data/watcher");
         watchDir.mkdir();
     }
-    public static URL getResource(String name){
+
+    public static URL getResource(String name) {
         return Thread.currentThread().getContextClassLoader().getResource(name);
     }
 }

@@ -6,9 +6,12 @@ package de.nilswitt.splan.FileHandlers;
 
 import com.google.gson.Gson;
 import de.nilswitt.splan.connectors.Api;
+import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.dataModels.Course;
 import de.nilswitt.splan.dataModels.Lesson;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -24,25 +27,22 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class VertretungsplanUntis {
+    private final Logger logger = LogManager.getLogger(ConfigConnector.class);
     private final ArrayList<VertretungsLesson> lessons = new ArrayList<>();
-    private final Logger logger;
     private final Api api;
     private final Gson gson = new Gson();
 
-    public VertretungsplanUntis(Logger logger, Api api) {
-        this.logger = logger;
+    public VertretungsplanUntis(Api api) {
+
         this.api = api;
     }
 
     public ArrayList<VertretungsLesson> readXslx(String fileLocation) throws IOException {
         Lesson[] lessonsApi = api.getLessons();
 
-        Logger logger = Logger.getLogger("TextLogger");
-        logger.info("Starting XSLX read");
+        this.logger.info("Starting XSLX read");
         Iterator rows;
         InputStream excelFileToRead;
         XSSFWorkbook wb;
@@ -51,10 +51,9 @@ public class VertretungsplanUntis {
         XSSFCell cell;
 
         try {
-            System.out.println(fileLocation);
             excelFileToRead = new FileInputStream(fileLocation);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error while opening File", e);
+            this.logger.warn("Error while opening File", e);
             return null;
         }
 
@@ -127,7 +126,7 @@ public class VertretungsplanUntis {
                         if (subjectGroup.length > 1) {
                             group = subjectGroup[1];
                         } else {
-                            System.out.println(gson.toJson(subjectGroup));
+                            logger.fatal(gson.toJson(subjectGroup));
                         }
 
                         if (group.startsWith("GK")) {
@@ -149,7 +148,7 @@ public class VertretungsplanUntis {
                             lesson.setLessonNumber(Integer.parseInt(lessonNumbers[0]));
                             compareLessons(lessonsApi, lesson);
                             if (lesson.getLessonId() == 0) {
-                                System.out.println("No lesson Found; for: " + gson.toJson(lesson));
+                                logger.warn("No lesson Found; for: " + gson.toJson(lesson));
                             }
                             lesson.genReplacementId();
                             if (lesson.getLessonId() != 0) lessons.add(new VertretungsLesson(lesson));
@@ -178,7 +177,7 @@ public class VertretungsplanUntis {
                     if (lesson.getCourse().getGroup().equals(apiLesson.getCourse().getGroup())) {
                         if (lesson.getLessonNumber() == apiLesson.getLessonNumber()) {
                             if (lesson.getWeekday() == apiLesson.getDay()) {
-                                System.out.println("Found(FIN):" + apiLesson.getId());
+                                logger.info("Found(FIN):" + apiLesson.getId());
                                 lesson.setLessonId(apiLesson.getId());
                                 break;
                             }

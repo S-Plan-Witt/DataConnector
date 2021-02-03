@@ -7,19 +7,19 @@ package de.nilswitt.splan.FileHandlers;
 import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.dataModels.Course;
 import de.nilswitt.splan.dataModels.Lesson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 public class StundenplanUntis {
-    private final Logger logger;
+    private static final Logger logger = LogManager.getLogger(StundenplanUntis.class);
     private final Api api;
 
-    public StundenplanUntis(Logger logger, Api api) {
-        this.logger = logger;
+    public StundenplanUntis(Api api) {
         this.api = api;
     }
 

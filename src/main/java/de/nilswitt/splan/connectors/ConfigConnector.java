@@ -6,7 +6,8 @@ package de.nilswitt.splan.connectors;
 
 import com.google.gson.Gson;
 import de.nilswitt.splan.dataModels.Config;
-import org.jetbrains.annotations.NotNull;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -14,17 +15,16 @@ import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.jar.JarFile;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ConfigConnector {
+    private static final Logger logger = LogManager.getLogger(ConfigConnector.class);
+
     /**
      * Config.json laden
      *
-     * @param logger Filelogger
      * @return return config if successful loaded the file
      */
-    public static @Nullable Config loadConfig(@NotNull Logger logger) {
+    public static @Nullable Config loadConfig() {
         Gson gson = new Gson();
         Config config = null;
         try {
@@ -46,13 +46,13 @@ public class ConfigConnector {
                 config = gson.fromJson(fileAsString, Config.class);
                 //Überprüfen ob die config gültig ist.
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Error while reading config: ", e);
+                logger.warn("Error while reading config: ", e);
             }
 
         } catch (FileNotFoundException e) {
-            logger.log(Level.WARNING, "Config not present");
+            logger.warn("Config not present");
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Config open failed", e);
+            logger.warn("Config open failed", e);
         }
         //Wenn die Konfig erfolgreich geladen und validiert wurde, wird diese zurückgegeben, sonst wir null.
         return config;

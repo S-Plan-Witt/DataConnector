@@ -8,21 +8,21 @@ import com.google.gson.Gson;
 import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.dataModels.Course;
 import de.nilswitt.splan.dataModels.Lesson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 public class Stundenplan {
-    private final Logger logger;
+    private static final Logger logger = LogManager.getLogger(Stundenplan.class);
     private final Api api;
     private final Gson gson = new Gson();
 
-    public Stundenplan(Logger logger, Api api) {
-        this.logger = logger;
+    public Stundenplan(Api api) {
         this.api = api;
     }
 
@@ -53,16 +53,14 @@ public class Stundenplan {
                                     break;
                                 case "kopf":
                                     grade = kopfToGrade(el);
-                                    System.out.println(grade);
                                     break;
                                 default:
-                                    System.out.println(el.getTagName());
+                                    logger.info(el.getTagName());
                             }
                         }
                     }
                 }
             }
-            System.out.println(gson.toJson(lessons));
             api.addLessons(lessons);
         } catch (Exception e) {
             e.printStackTrace();
@@ -103,7 +101,6 @@ public class Stundenplan {
                         Element lessonCourse = (Element) lessonCourses.item(lessonCourseCounter);
 
                         if (lessonCourse.getTagName().startsWith("tag")) {
-                            System.out.println(lessonNumber + ": " + lessonCourse.getTagName());
                             try {
                                 lessonModel.getCourse().setSubject(lessonCourse.getElementsByTagName("fach").item(0).getTextContent());
                                 lessonModel.setLessonNumber(lessonNumber);

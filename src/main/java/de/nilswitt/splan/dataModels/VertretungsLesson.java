@@ -69,7 +69,6 @@ public class VertretungsLesson {
                 this.date = parts[0].concat("-").concat(parts[1]).concat("-").concat(parts[2]);
                 LocalDate localDate = LocalDate.parse(this.date, formatter);
                 this.weekday = localDate.getDayOfWeek().getValue();
-                System.out.println(localDate.getDayOfWeek().getValue());
             }
         } catch (Exception e) {
             Logger.getGlobal().log(Level.WARNING, e.toString());

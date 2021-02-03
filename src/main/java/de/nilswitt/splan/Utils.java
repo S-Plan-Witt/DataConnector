@@ -34,7 +34,6 @@ public class Utils {
         if (day.length() == 1) {
             day = 0 + day;
         }
-        System.out.println(year + "-" + month + "-" + day);
         return year + "-" + month + "-" + day;
     }
 }

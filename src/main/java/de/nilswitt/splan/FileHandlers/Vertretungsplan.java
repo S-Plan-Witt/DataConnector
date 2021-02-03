@@ -7,10 +7,13 @@ package de.nilswitt.splan.FileHandlers;
 import com.google.gson.Gson;
 import de.nilswitt.splan.Utils;
 import de.nilswitt.splan.connectors.Api;
+import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.dataModels.Aufsicht;
 import de.nilswitt.splan.dataModels.Course;
 import de.nilswitt.splan.dataModels.Lesson;
 import de.nilswitt.splan.dataModels.VertretungsLesson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -18,27 +21,21 @@ import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class Vertretungsplan {
+    private static final Logger logger = LogManager.getLogger(ConfigConnector.class);
     private final Utils utils = new Utils();
     private final List<VertretungsLesson> lessons = new ArrayList<>();
     private final List<Aufsicht> aufsichten = new ArrayList<>();
-    private final Logger logger;
     private final Api api;
     private final Gson gson = new Gson();
 
-    public Vertretungsplan(Logger logger, Api api) {
-        this.logger = logger;
+    public Vertretungsplan(Api api) {
         this.api = api;
     }
 
     public void readDocument(Document document) {
         Lesson[] lessonsApi = api.getLessons();
-        if (lessonsApi.length > 0) {
-            System.out.println(gson.toJson(lessonsApi[0]));
-        }
-
 
         lessons.clear();
         String currentDate = "";
@@ -99,7 +96,7 @@ public class Vertretungsplan {
                                                 if (lesson.getCourse().getGroup().equals(apiLesson.getCourse().getGroup())) {
                                                     if (lesson.getLessonNumber() == apiLesson.getLessonNumber()) {
                                                         if (lesson.getWeekday() == apiLesson.getDay()) {
-                                                            System.out.println("Found:" + apiLesson.getId());
+                                                            logger.info("Found:" + apiLesson.getId());
                                                             lesson.setLessonId(apiLesson.getId());
                                                             break;
                                                         }
