@@ -1,4 +1,13 @@
+os: linux
 dist: focal
 language: java
 jdk:
   - oraclejdk15
+before_deploy:
+  - mvn assembly:single
+deploy:
+  provider: releases
+  api_key: $GITHUB_KEY
+  file: "target/S-Plan_SchildConnnector-jar-with-dependencies.jar"
+  skip_cleanup: true
+  draft: true
