@@ -100,7 +100,7 @@ public class CustomWatcher implements Runnable {
                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder builder = factory.newDocumentBuilder();
 
-                InputStream in = Files.newInputStream(Paths.get(this.watchPath.toString().concat(changed)));
+                InputStream in = Files.newInputStream(Paths.get(this.watchPath.toString().concat("/").concat(changed)));
                 Document document = builder.parse(in);
 
                 String nodeName;
@@ -130,12 +130,12 @@ public class CustomWatcher implements Runnable {
                 }
 
             } else if (changed.endsWith(".xlsx")) {
-                logger.info("Excel: " + Paths.get(this.watchPath.toString().concat(changed)));
-                ArrayList<VertretungsLesson> vertretungsLessons = vertretungsplanUntis.readXslx(Paths.get(this.watchPath.toString().concat(changed)).toString());
+                logger.info("Excel: " + Paths.get(this.watchPath.toString().concat("/").concat(changed)));
+                ArrayList<VertretungsLesson> vertretungsLessons = vertretungsplanUntis.readXslx(Paths.get(this.watchPath.toString().concat("/").concat(changed)).toString());
                 vertretungsplanUntis.compareVplanLocalWithApi(vertretungsLessons);
             } else if (changed.toLowerCase().endsWith(".txt")) {
-                logger.info("DIF: " + Paths.get(this.watchPath.toString().concat(changed)));
-                stundenplanUntis.readDocument(Paths.get(this.watchPath.toString().concat(changed)).toString());
+                logger.info("DIF: " + Paths.get(this.watchPath.toString().concat("/").concat(changed)));
+                stundenplanUntis.readDocument(Paths.get(this.watchPath.toString().concat("/").concat(changed)).toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
