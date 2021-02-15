@@ -88,21 +88,24 @@ public final class TextAreaAppender extends AbstractAppender {
 
         // append log text to TextArea
         try {
-            Platform.runLater(() -> {
-                try {
-                    if (textArea != null) {
-                        if (textArea.getText().length() == 0) {
-                            textArea.setText(message);
-                        } else {
-                            textArea.selectEnd();
-                            textArea.insertText(textArea.getText().length(),
-                                    message);
+            if(textArea != null){
+                Platform.runLater(() -> {
+                    try {
+                        if (textArea != null) {
+                            if (textArea.getText().length() == 0) {
+                                textArea.setText(message);
+                            } else {
+                                textArea.selectEnd();
+                                textArea.insertText(textArea.getText().length(),
+                                        message);
+                            }
                         }
+                    } catch (final Throwable t) {
+                        logger.fatal("Error while append to TextArea: " + t.getMessage());
                     }
-                } catch (final Throwable t) {
-                    logger.fatal("Error while append to TextArea: " + t.getMessage());
-                }
-            });
+                });
+            }
+
         } catch (final IllegalStateException ex) {
             ex.printStackTrace();
 
