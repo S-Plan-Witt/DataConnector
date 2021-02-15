@@ -1,0 +1,82 @@
+/*
+ * Copyright (c) 2021. Nils Witt
+ */
+
+package de.nilswitt.splan;
+
+import de.nilswitt.splan.FileHandlers.*;
+import de.nilswitt.splan.connectors.Api;
+import de.nilswitt.splan.connectors.ConfigConnector;
+import de.nilswitt.splan.connectors.FileSystemConnector;
+import de.nilswitt.splan.dataModels.Config;
+import de.nilswitt.splan.gui.ConsoleGui;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class CliApplication {
+
+    private final Logger logger = LogManager.getLogger(CliApplication.class);
+    private Vertretungsplan vertretungsplan;
+    private Stundenplan stundenplan;
+    private Klausurplan klausurenplan;
+    private VertretungsplanUntis vertretungsplanUntis;
+    private StundenplanUntis stundenplanUntis;
+    private CustomWatcher customWatcher;
+    private Config config;
+    private Api api;
+    private Thread watcherThread;
+
+
+    public CliApplication() {
+    }
+
+    public void initApplication() {
+
+        FileSystemConnector.createDataDirs();
+
+        config = ConfigConnector.loadConfig();
+        if (config == null) {
+            try {
+                ConfigConnector.copyDefaultConfig();
+                logger.info("Created default config.json");
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.info("Failed to create default config.json");
+            }
+            return;
+        }
+
+        if (!Api.verifyBearer(config.getBearer(), config.getUrl())) {
+            //Falls nicht config null setzen.
+            logger.warn("Api token invalid");
+
+            //return;
+        }
+
+        api = new Api(config);
+
+        vertretungsplan = new Vertretungsplan(api);
+        stundenplan = new Stundenplan(api);
+        klausurenplan = new Klausurplan(api);
+        vertretungsplanUntis = new VertretungsplanUntis(api);
+        stundenplanUntis = new StundenplanUntis(api);
+
+        customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, stundenplanUntis, klausurenplan, config);
+
+        watcherThread = new Thread(customWatcher);
+        logger.info("Done initialisation");
+    }
+
+    public CustomWatcher getCustomWatcher() {
+        return customWatcher;
+    }
+
+    public Thread getWatcherThread() {
+        return watcherThread;
+    }
+
+    public void resetWatcherThread() {
+        customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, stundenplanUntis, klausurenplan, config);
+        watcherThread = new Thread(customWatcher);
+    }
+}

@@ -4,6 +4,7 @@
 
 package de.nilswitt.splan.gui;
 
+import de.nilswitt.splan.CliApplication;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -28,6 +29,11 @@ public class Controller {
     @FXML
     private Button buttonWatcher;
     private ConsoleGui consoleGui;
+    private CliApplication cliApplication;
+
+    public void setCliApplication(CliApplication cliApplication) {
+        this.cliApplication = cliApplication;
+    }
 
     public void setConsoleGui(ConsoleGui consoleGui) {
         this.consoleGui = consoleGui;
@@ -62,18 +68,18 @@ public class Controller {
             @Override
             public void handle(ActionEvent e) {
                 buttonWatcher.setText("Stop watcher");
-                if (consoleGui.getCustomWatcher().isRunning()) {
+                if (cliApplication.getCustomWatcher().isRunning()) {
                     buttonWatcher.setText("Start watcher");
                     try {
-                        consoleGui.getCustomWatcher().shutdown();
+                        cliApplication.getCustomWatcher().shutdown();
                     } catch (IOException ex) {
                         //ex.printStackTrace();
                     }
 
                 } else {
-                    consoleGui.resetWatcherThread();
+                    cliApplication.resetWatcherThread();
                     buttonWatcher.setText("Stop watcher");
-                    consoleGui.getWatcherThread().start();
+                    cliApplication.getWatcherThread().start();
                 }
             }
         });
