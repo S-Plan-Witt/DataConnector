@@ -41,7 +41,7 @@ public class VertretungsplanUntis {
 
     public ArrayList<VertretungsLesson> readXslx(String fileLocation) throws IOException {
         Lesson[] lessonsApi = api.getLessons();
-
+        this.logger.info(fileLocation);
         this.logger.info("Starting XSLX read");
         Iterator rows;
         InputStream excelFileToRead;
