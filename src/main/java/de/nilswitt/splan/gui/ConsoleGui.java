@@ -11,6 +11,7 @@ import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.connectors.FileSystemConnector;
 import de.nilswitt.splan.dataModels.Config;
+import de.nilswitt.splan.exceptions.InvalidCredentialsException;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

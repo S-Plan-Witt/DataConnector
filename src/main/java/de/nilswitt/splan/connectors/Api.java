@@ -58,8 +58,10 @@ public class Api {
                 logger.warn("Bearer invalid");
             }
         } catch (java.net.UnknownHostException e) {
+            e.printStackTrace();
             logger.warn("Host not reachable");
         } catch (Exception e) {
+            e.printStackTrace();
             logger.warn("Exception while verifying Bearer");
         }
 

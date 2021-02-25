@@ -9,6 +9,7 @@ import de.nilswitt.splan.connectors.Api;
 import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.connectors.FileSystemConnector;
 import de.nilswitt.splan.dataModels.Config;
+import de.nilswitt.splan.exceptions.InvalidCredentialsException;
 import de.nilswitt.splan.gui.ConsoleGui;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +31,7 @@ public class CliApplication {
     public CliApplication() {
     }
 
-    public void initApplication() {
+    public void initApplication() throws InvalidCredentialsException {
 
         FileSystemConnector.createDataDirs();
 
@@ -49,8 +50,7 @@ public class CliApplication {
         if (!Api.verifyBearer(config.getBearer(), config.getUrl())) {
             //Falls nicht config null setzen.
             logger.warn("Api token invalid");
-
-            //return;
+            throw new InvalidCredentialsException();
         }
 
         api = new Api(config);
