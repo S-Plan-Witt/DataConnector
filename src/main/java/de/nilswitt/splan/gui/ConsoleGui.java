@@ -61,7 +61,11 @@ public class ConsoleGui extends Application {
         }
 
         this.logger.info("Gui Init Done");
-        cliApplication.initApplication();
+        try {
+            cliApplication.initApplication();
+        } catch (InvalidCredentialsException invalidCredentialsException) {
+            logger.error("Exited(error)");
+        }
     }
 
     private void enableSysTray() {
