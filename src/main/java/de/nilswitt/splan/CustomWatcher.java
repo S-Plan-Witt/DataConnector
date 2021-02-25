@@ -22,7 +22,7 @@ import java.nio.file.*;
 import java.util.ArrayList;
 
 public class CustomWatcher implements Runnable {
-    private static final Logger logger = LogManager.getLogger(ConfigConnector.class);
+    private static final Logger logger = LogManager.getLogger(CustomWatcher.class);
     private final Vertretungsplan vertretungsplan;
     private final Stundenplan stundenplan;
     private final Klausurplan klausurplan;
@@ -123,6 +123,7 @@ public class CustomWatcher implements Runnable {
                     case "dataroot":
                         logger.info("Klausuren");
                         klausurplan.readDocument(document);
+                        logger.info("Done reading; pushing");
                         klausurplan.pushExams();
                         break;
                     default:

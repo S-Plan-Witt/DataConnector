@@ -115,7 +115,7 @@ public class Klausurplan {
                             e.printStackTrace();
                         }
                     } catch (Exception e) {
-                        logger.warn("Error reading Element", e);
+                        logger.warn("Error reading Element");
                     }
                 }
             }

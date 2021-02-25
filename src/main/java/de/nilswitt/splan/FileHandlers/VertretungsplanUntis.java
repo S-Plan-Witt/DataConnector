@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class VertretungsplanUntis {
-    private final Logger logger = LogManager.getLogger(ConfigConnector.class);
+    private final Logger logger = LogManager.getLogger(VertretungsplanUntis.class);
     private final ArrayList<VertretungsLesson> lessons = new ArrayList<>();
     private final Api api;
     private final Gson gson = new Gson();
