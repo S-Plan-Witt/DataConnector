@@ -68,7 +68,6 @@ public class CustomWatcher implements Runnable {
 
         this.watchPath.register(watchService,
                 StandardWatchEventKinds.ENTRY_CREATE,
-                StandardWatchEventKinds.ENTRY_DELETE,
                 StandardWatchEventKinds.ENTRY_MODIFY);
         logger.info("Watcher started");
         isStarted = true;
