@@ -56,10 +56,8 @@ public class VertretungsplanUntis {
             return null;
         }
 
-        //Öffnen der Datei
         logger.info("opening File");
         wb = new XSSFWorkbook(excelFileToRead);
-        //Erstes Arbeitsblatt öffnen
         logger.info("opening Sheet");
         sheet = wb.getSheetAt(0);
         rows = sheet.rowIterator();
@@ -227,7 +225,6 @@ public class VertretungsplanUntis {
 
 
         for (VertretungsLesson vertretungsLesson : lessonsServer) {
-            //System.out.println(vertretungsLesson.getReplacementId());
             if (!lessonsLocalIds.contains(vertretungsLesson.getReplacementId())) {
                 removedLessonsIds.add(vertretungsLesson.getReplacementId());
             } else {
@@ -242,11 +239,8 @@ public class VertretungsplanUntis {
         ArrayList<VertretungsLesson> addedLessons = new ArrayList<>();
         for (VertretungsLesson lesson : lessons) {
             if (!lessonsServerIds.contains(lesson.getReplacementId())) {
-                //System.out.println("added: ".concat(lesson.getReplacementId()).concat(",pos: ").concat(String.valueOf(lessonsLocalIds.indexOf(lesson.getReplacementId()))));
                 addedLessons.add(lesson);
-                //System.out.println(lesson.getReplacementId());
             }
-
         }
 
         logger.info("removed:".concat(gson.toJson(removedLessonsIds)));
