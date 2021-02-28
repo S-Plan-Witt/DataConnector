@@ -4,5 +4,5 @@
 
 package de.nilswitt.splan.exceptions;
 
-public class InvalidCredentialsException extends Exception{
+public class InvalidCredentialsException extends Exception {
 }

@@ -24,7 +24,7 @@ public class Main {
 
         }
 
-        if(cli){
+        if (cli) {
             startCLI();
         } else {
             startGUI();

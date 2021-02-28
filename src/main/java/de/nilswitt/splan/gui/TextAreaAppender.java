@@ -88,7 +88,7 @@ public final class TextAreaAppender extends AbstractAppender {
 
         // append log text to TextArea
         try {
-            if(textArea != null){
+            if (textArea != null) {
                 Platform.runLater(() -> {
                     try {
                         if (textArea != null) {

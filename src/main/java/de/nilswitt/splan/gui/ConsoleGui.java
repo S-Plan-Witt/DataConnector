@@ -22,7 +22,7 @@ import java.awt.*;
 public class ConsoleGui extends Application {
 
     private final Logger logger = LogManager.getLogger(ConsoleGui.class);
-    private CliApplication cliApplication = new CliApplication();
+    private final CliApplication cliApplication = new CliApplication();
 
     public static void launchGui() {
         launch();
