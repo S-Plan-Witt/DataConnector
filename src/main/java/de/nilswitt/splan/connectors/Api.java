@@ -123,7 +123,7 @@ public class Api {
 
     public void addVertretungen(ArrayList<VertretungsLesson> vertretungen) {
 
-        RequestBody body = RequestBody.create(mediaType, gson.toJson(vertretungen));
+        RequestBody body = RequestBody.create(gson.toJson(vertretungen), mediaType);
         Request request = new Request.Builder()
                 .url(this.config.getUrl().concat("/replacementLessons"))
                 .post(body)
@@ -141,7 +141,7 @@ public class Api {
 
     public void addLessons(ArrayList<Lesson> lessons) {
 
-        RequestBody body = RequestBody.create(mediaType, gson.toJson(lessons));
+        RequestBody body = RequestBody.create(gson.toJson(lessons), mediaType);
         Request request = new Request.Builder()
                 .url(this.config.getUrl().concat("/timetable/lessons"))
                 .post(body)
@@ -159,7 +159,7 @@ public class Api {
 
     public VertretungsLesson[] getReplacementLessonByFilter(String info) {
 
-        RequestBody body = RequestBody.create(mediaType, "{\"info\":\"" + info + "\"}");
+        RequestBody body = RequestBody.create("{\"info\":\"" + info + "\"}", mediaType);
 
         Request request = new Request.Builder()
                 .url(this.config.getUrl().concat("/replacementLessons/find/"))
@@ -179,7 +179,7 @@ public class Api {
     }
 
     public void addExams(ArrayList<Klausur> exams) {
-        RequestBody body = RequestBody.create(mediaType, gson.toJson(exams));
+        RequestBody body = RequestBody.create(gson.toJson(exams), mediaType);
         Request request = new Request.Builder()
                 .url(this.config.getUrl().concat("/exams"))
                 .post(body)
