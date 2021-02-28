@@ -16,4 +16,4 @@ after_success:
   - curl --ftp-create-dirs
     -T "$TRAVIS_BRANCH".zip
     --key /tmp/sftp_rsa
-    sftp://${SFTP_USER}:${SFTP_PASSWORD}@annika.cloud.nils-witt.de/dataRoot/files-webserver/releases/S-Plan_DataConnector/
+    sftp://${SFTP_USER}:nopass@annika.cloud.nils-witt.de/dataRoot/files-webserver/releases/S-Plan_DataConnector/
