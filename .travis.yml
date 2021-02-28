@@ -14,6 +14,6 @@ after_success:
   - zip -r "$TRAVIS_BRANCH".zip artifacts
   - echo "${SFTP_KEY}" | base64 --decode >/tmp/sftp_rsa
   - curl --ftp-create-dirs
-    -T filename
+    -T "$TRAVIS_BRANCH".zip
     --key /tmp/sftp_rsa
-    sftp://${SFTP_USER}:${SFTP_PASSWORD}@example.com/directory/filename
+    sftp://${SFTP_USER}:${SFTP_PASSWORD}@annika.cloud.nils-witt.de/dataRoot/files-webserver/releases/S-Plan_DataConnector/
