@@ -5,12 +5,7 @@
 package de.nilswitt.splan.gui;
 
 import de.nilswitt.splan.CliApplication;
-import de.nilswitt.splan.CustomWatcher;
-import de.nilswitt.splan.FileHandlers.*;
-import de.nilswitt.splan.connectors.Api;
-import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.connectors.FileSystemConnector;
-import de.nilswitt.splan.dataModels.Config;
 import de.nilswitt.splan.exceptions.InvalidCredentialsException;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

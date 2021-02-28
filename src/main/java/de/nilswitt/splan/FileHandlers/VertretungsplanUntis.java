@@ -6,7 +6,6 @@ package de.nilswitt.splan.FileHandlers;
 
 import com.google.gson.Gson;
 import de.nilswitt.splan.connectors.Api;
-import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.dataModels.Course;
 import de.nilswitt.splan.dataModels.Lesson;
 import de.nilswitt.splan.dataModels.VertretungsLesson;

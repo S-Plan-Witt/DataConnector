@@ -10,7 +10,6 @@ import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.connectors.FileSystemConnector;
 import de.nilswitt.splan.dataModels.Config;
 import de.nilswitt.splan.exceptions.InvalidCredentialsException;
-import de.nilswitt.splan.gui.ConsoleGui;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -5,7 +5,6 @@
 package de.nilswitt.splan;
 
 import de.nilswitt.splan.FileHandlers.*;
-import de.nilswitt.splan.connectors.ConfigConnector;
 import de.nilswitt.splan.connectors.FileSystemConnector;
 import de.nilswitt.splan.connectors.TrayNotification;
 import de.nilswitt.splan.dataModels.Config;
