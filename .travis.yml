@@ -12,5 +12,6 @@ after_deploy:
   - docker push ghcr.io/nils-witt/s-plan_dataconnector
 after_success:
   - zip -r "$TRAVIS_BRANCH".zip artifacts
-  - echo "${SFTP_KEY}" | base64 --decode >/tmp/sftp_rsa
+  - echo "${SFTP_KEY}" >/tmp/sftp_rsa
+  - cat /tmp/sftp_rsa
   - curl --ftp-create-dirs -T "$TRAVIS_BRANCH".zip --key /tmp/sftp_rsa sftp://${SFTP_USER}:nopass@annika.cloud.nils-witt.de/dataRoot/files-webserver/releases/S-Plan_DataConnector/ -k
