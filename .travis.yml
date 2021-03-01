@@ -6,13 +6,15 @@ jdk:
 before_deploy:
 
   - mvn package
+  - zip -r artifacts.zip artifacts
+deploy:
+  provider: releases
+  api_key: $GITHUB_KEY
+  file: artifacts.zip
+  skip_cleanup: true
+  draft: true
 after_deploy:
   - docker build -t ghcr.io/nils-witt/s-plan_dataconnector:"$DOCKER_TAG" .
   - docker tag ghcr.io/nils-witt/s-plan_dataconnector:"$DOCKER_TAG" ghcr.io/nils-witt/s-plan_dataconnector:"$TRAVIS_COMMIT"
   - echo "$GITHUB_KEY" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
   - docker push ghcr.io/nils-witt/s-plan_dataconnector
-after_success:
-  - openssl aes-256-cbc -k "$SFTP_KEY_PASS" -in sftp_key.enc -out sftp_rsa -d
-  - cat sftp_rsa
-  - zip -r "$TRAVIS_BRANCH".zip artifacts
-  - curl --ftp-create-dirs -T "$TRAVIS_BRANCH".zip --key sftp_rsa sftp://${SFTP_USER}:nopass@annika.cloud.nils-witt.de/dataRoot/files-webserver/releases/S-Plan_DataConnector/ -k
