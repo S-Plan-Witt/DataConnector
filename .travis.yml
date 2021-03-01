@@ -4,6 +4,7 @@ language: java
 jdk:
   - oraclejdk15
 before_deploy:
+
   - mvn package
   - zip -r artifacts.zip artifacts
 deploy:
