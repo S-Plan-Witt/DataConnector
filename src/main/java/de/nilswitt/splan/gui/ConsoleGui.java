@@ -18,20 +18,26 @@ import org.apache.logging.log4j.Logger;
 import javax.imageio.ImageIO;
 import java.awt.*;
 
-
+/**
+ * Class ConsoleGui
+ * Main class for all gui operations
+ */
 public class ConsoleGui extends Application {
 
     private final Logger logger = LogManager.getLogger(ConsoleGui.class);
     private final CliApplication cliApplication = new CliApplication();
 
+    /**
+     * Starts the FX launcher
+     */
     public static void launchGui() {
         launch();
     }
 
     /**
-     * JavaFX stageStart
+     * Starts the JavaFX stage
      *
-     * @param primaryStage
+     * @param primaryStage - stage to user
      */
     @Override
     public void start(Stage primaryStage) {
@@ -63,6 +69,9 @@ public class ConsoleGui extends Application {
         }
     }
 
+    /**
+     * Starts the systray icon
+     */
     private void enableSysTray() {
 
         if (!SystemTray.isSupported()) {

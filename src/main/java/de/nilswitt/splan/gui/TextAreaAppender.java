@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021.
+ * FROM https://blog.pikodat.com/2015/10/11/frontend-logging-with-javafx/
  */
 
 package de.nilswitt.splan.gui;
@@ -35,7 +35,6 @@ public final class TextAreaAppender extends AbstractAppender {
 
     private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
     private final Lock readLock = rwLock.readLock();
-
 
     protected TextAreaAppender(String name, Filter filter, Layout<? extends Serializable> layout, final boolean ignoreExceptions) {
         super(name, filter, layout, ignoreExceptions);

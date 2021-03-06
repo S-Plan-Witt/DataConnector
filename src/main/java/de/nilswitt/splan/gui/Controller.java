@@ -16,10 +16,20 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
+/**
+ * Class Controller
+ * FX Controller for the mainviewfxml.fxml View
+ */
 public class Controller {
     private final Logger logger = LogManager.getLogger(Controller.class);
+    /**
+     * Logging field
+     */
     @FXML
     private TextArea textArea;
+    /**
+     * Main Pane
+     */
     @FXML
     private AnchorPane anchorPane;
     @FXML
@@ -28,6 +38,7 @@ public class Controller {
     private Button buttonReloadConfig;
     @FXML
     private Button buttonWatcher;
+
     private ConsoleGui consoleGui;
     private CliApplication cliApplication;
 
@@ -42,7 +53,7 @@ public class Controller {
     @FXML
     private void initialize() {
         textArea.setEditable(false);
-
+        //Sets the link to the logger
         TextAreaAppender.setTextArea(textArea);
 
         textArea.prefWidthProperty().bind(anchorPane.widthProperty());
