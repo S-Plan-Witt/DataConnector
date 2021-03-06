@@ -31,12 +31,15 @@ public class CliApplication {
     }
 
     public void initApplication() throws InvalidCredentialsException {
-
+        //Creates the runtime directorys
         FileSystemConnector.createDataDirs();
 
+        //loads the config
         config = ConfigConnector.loadConfig();
+        //if no or corrupted config
         if (config == null) {
             try {
+                //extract the template from the jar
                 ConfigConnector.copyDefaultConfig();
                 logger.info("Created default config.json");
             } catch (Exception e) {
@@ -45,7 +48,7 @@ public class CliApplication {
             }
             return;
         }
-
+        //validates the Api access token
         if (!Api.verifyBearer(config.getBearer(), config.getUrl())) {
             //Falls nicht config null setzen.
             logger.warn("Api token invalid");
@@ -74,6 +77,9 @@ public class CliApplication {
         return watcherThread;
     }
 
+    /**
+     * Replaces the old watcher thread with a new one
+     */
     public void resetWatcherThread() {
         customWatcher = new CustomWatcher(vertretungsplan, vertretungsplanUntis, stundenplan, stundenplanUntis, klausurenplan, config);
         watcherThread = new Thread(customWatcher);

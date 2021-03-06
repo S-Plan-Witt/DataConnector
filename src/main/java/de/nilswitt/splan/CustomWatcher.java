@@ -20,6 +20,10 @@ import java.io.InputStream;
 import java.nio.file.*;
 import java.util.ArrayList;
 
+/**
+ * Class CustomWatcher
+ * Customized watcher to run in a new thread
+ */
 public class CustomWatcher implements Runnable {
     private static final Logger logger = LogManager.getLogger(CustomWatcher.class);
     private final Vertretungsplan vertretungsplan;
@@ -42,6 +46,10 @@ public class CustomWatcher implements Runnable {
         this.watchPath = Path.of(FileSystemConnector.getWorkingDir().concat("/data/watcher"));
     }
 
+    /**
+     * From Runnable
+     * Adds a custom start to the new Thread
+     */
     @Override
     public synchronized void run() {
         logger.info("Watcher is starting");
@@ -62,9 +70,10 @@ public class CustomWatcher implements Runnable {
         return isStarted;
     }
 
-    private void startWatcher() throws IOException, InterruptedException {
+    private void startWatcher() throws IOException {
         watchService = this.watchPath.getFileSystem().newWatchService();
 
+        //Starts the wacher and listens for creations and modifications
         this.watchPath.register(watchService,
                 StandardWatchEventKinds.ENTRY_CREATE,
                 StandardWatchEventKinds.ENTRY_MODIFY);
@@ -84,16 +93,24 @@ public class CustomWatcher implements Runnable {
                 key.reset();
             }
         } catch (ClosedWatchServiceException ex) {
-            //No need to handle
+            /*
+            The Exception is thrown if the watcher is already shutdown
+            Will throw if thread is stopped
+             */
         } catch (Exception ex) {
             ex.printStackTrace();
             logger.fatal(ex);
         }
     }
 
+    /**
+     * Processes files in the watch-dir with the given name
+     * @param changed {String} filename
+     */
     public void fileProcessor(String changed) {
         try {
 
+            //Determination based on file extension
             if (changed.endsWith(".xml")) {
                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder builder = factory.newDocumentBuilder();
@@ -108,24 +125,23 @@ public class CustomWatcher implements Runnable {
                     TrayNotification.display("Änderung erkannt", "Datei: ".concat(nodeName));
                 }
 
+                //Determination based on xml root node
                 switch (nodeName) {
-                    case "vp":
+                    case "vp" -> {
                         logger.info("Vplan");
                         vertretungsplan.readDocument(document);
-                        break;
-                    case "sp":
+                    }
+                    case "sp" -> {
                         logger.info("Stundenplan");
-                        //stundenplanFileReader(document, logger, config);
                         stundenplan.readDocument(document);
-                        break;
-                    case "dataroot":
+                    }
+                    case "dataroot" -> {
                         logger.info("Klausuren");
                         klausurplan.readDocument(document);
                         logger.info("Done reading; pushing");
                         klausurplan.pushExams();
-                        break;
-                    default:
-                        logger.info(nodeName);
+                    }
+                    default -> logger.info(nodeName);
                 }
 
             } else if (changed.endsWith(".xlsx")) {
